@@ -1,0 +1,23 @@
+{
+  "name": "raastasense-root",
+  "version": "1.0.0",
+  "description": "RaastaSense: Production-Ready Anime-Themed Road Safety Platform",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "bootstrap": "npm install",
+    "build:frontend": "npm run build -w frontend",
+    "build:backend": "npm run build -w backend",
+    "build": "npm run build:frontend && npm run build:backend",
+    "start": "npm start -w backend",
+    "dev": "concurrently \"npm run dev -w frontend\" \"npm run dev -w backend\"",
+    "clean": "rimraf frontend/dist backend/dist node_modules frontend/node_modules backend/node_modules"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "rimraf": "^5.0.7"
+  }
+}
