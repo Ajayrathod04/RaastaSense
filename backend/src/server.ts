@@ -252,6 +252,302 @@ app.get('/api/emergency', (req: Request, res: Response) => {
   }
 });
 
+// ==========================================
+// NEW: DYNAMIC SIMULATOR & MAP API ROUTES
+// ==========================================
+
+// Global in-memory states to simulate real-time road conditions
+interface DynamicIncident {
+  id: string;
+  type: string;
+  description: string;
+  location: string;
+  latOffset: number;
+  lngOffset: number;
+  severity: string;
+  pulse: boolean;
+  reportedBy: string;
+}
+
+const dynamicRoadStatus: Record<string, 'heavy' | 'moderate' | 'smooth'> = {
+  'Cyber Bypass Highway': 'heavy',
+  'Sector 5 Tech Corridor': 'moderate',
+  'Neon Garden Avenue': 'smooth',
+  'Sentinel Ring Road': 'heavy'
+};
+
+const dynamicIncidents: DynamicIncident[] = [
+  {
+    id: 'inc-1',
+    type: 'accident',
+    description: 'Minor two-wheeler skid at the turning, lane partially blocked.',
+    location: 'Cyber Bypass Exit 3',
+    latOffset: 0.002,
+    lngOffset: -0.002,
+    severity: 'High',
+    pulse: true,
+    reportedBy: 'Road Guardian Patrol'
+  },
+  {
+    id: 'inc-2',
+    type: 'pothole',
+    description: 'Deep hazardous pothole in high-speed lane.',
+    location: 'Sector 5 Tech Corridor',
+    latOffset: -0.006,
+    lngOffset: 0.002,
+    severity: 'Medium',
+    pulse: false,
+    reportedBy: 'User-1082'
+  },
+  {
+    id: 'inc-3',
+    type: 'police',
+    description: 'Speed radar interception and compliance radar checkpoints.',
+    location: 'Neon Garden Avenue Crossing',
+    latOffset: 0.004,
+    lngOffset: 0.001,
+    severity: 'Low',
+    pulse: true,
+    reportedBy: 'Traffic Division HQ'
+  },
+  {
+    id: 'inc-4',
+    type: 'streetlight-out',
+    description: 'Three consecutive streetlights down, high crime/crash risk at night.',
+    location: 'Sentinel Ring Road Dark Zone',
+    latOffset: -0.010,
+    lngOffset: -0.005,
+    severity: 'High',
+    pulse: false,
+    reportedBy: 'Community Shield'
+  }
+];
+
+// Background simulation loop: runs every 4 seconds to simulate dynamic traffic shifts
+setInterval(() => {
+  // 1. Shuffling traffic flow densities (40% chance of shift per road segment)
+  const statusOptions: ('heavy' | 'moderate' | 'smooth')[] = ['heavy', 'moderate', 'smooth'];
+  Object.keys(dynamicRoadStatus).forEach(roadName => {
+    if (Math.random() < 0.4) {
+      const current = dynamicRoadStatus[roadName];
+      const alternatives = statusOptions.filter(s => s !== current);
+      dynamicRoadStatus[roadName] = alternatives[Math.floor(Math.random() * alternatives.length)];
+    }
+  });
+
+  // 2. Dynamic incident spawning / resolving (30% spawn chance, 25% resolve chance)
+  if (Math.random() < 0.3 && dynamicIncidents.length < 8) {
+    const types = ['accident', 'pothole', 'police', 'streetlight-out'];
+    const chosenType = types[Math.floor(Math.random() * types.length)];
+    const uniqueId = `sim-inc-${Date.now()}`;
+    
+    let description = 'Automated sensor alert: general corridor slow-down.';
+    let location = 'Zone-Alpha Ring Road';
+    let severity = 'Medium';
+    
+    if (chosenType === 'accident') {
+      description = 'Multi-vehicle bumper scrap blocking lane 2.';
+      location = 'Junction-A Bypass Route';
+      severity = 'High';
+    } else if (chosenType === 'pothole') {
+      description = 'Severe pavement depression reported by smart tires.';
+      location = 'Sector 5 Outer Boulevard';
+      severity = 'Medium';
+    } else if (chosenType === 'police') {
+      description = 'Mobile police safety checking unit active.';
+      location = 'Westside Highway Corridor';
+      severity = 'Low';
+    } else if (chosenType === 'streetlight-out') {
+      description = 'Light grid failure on local lane segment.';
+      location = 'Neon Garden Boulevard north';
+      severity = 'High';
+    }
+
+    dynamicIncidents.push({
+      id: uniqueId,
+      type: chosenType,
+      description,
+      location,
+      latOffset: (Math.random() - 0.5) * 0.015,
+      lngOffset: (Math.random() - 0.5) * 0.015,
+      severity,
+      pulse: Math.random() > 0.4,
+      reportedBy: 'AI Radar Sentinel'
+    });
+  } else if (Math.random() < 0.25 && dynamicIncidents.length > 2) {
+    // Resolve oldest simulated incident
+    const indexToRemove = dynamicIncidents.findIndex(inc => inc.id.startsWith('sim-inc-'));
+    if (indexToRemove !== -1) {
+      dynamicIncidents.splice(indexToRemove, 1);
+    }
+  }
+}, 4000);
+
+// Get dynamic traffic lines, localized incidents, and heatmap layers
+app.get('/api/map-data', (req: Request, res: Response) => {
+  const lat = req.query.lat;
+  const lng = req.query.lng;
+
+  const userLat = lat ? parseFloat(lat as string) : 12.9716;
+  const userLng = lng ? parseFloat(lng as string) : 77.5946;
+
+  // 1. Generate live dynamic traffic polylines centered around user coordinates
+  const roads = [
+    {
+      name: 'Cyber Bypass Highway',
+      status: dynamicRoadStatus['Cyber Bypass Highway'],
+      coordinates: [
+        [userLat - 0.008, userLng - 0.015],
+        [userLat - 0.003, userLng - 0.008],
+        [userLat + 0.002, userLng - 0.002],
+        [userLat + 0.006, userLng + 0.005],
+        [userLat + 0.012, userLng + 0.010]
+      ]
+    },
+    {
+      name: 'Sector 5 Tech Corridor',
+      status: dynamicRoadStatus['Sector 5 Tech Corridor'],
+      coordinates: [
+        [userLat - 0.012, userLng + 0.005],
+        [userLat - 0.006, userLng + 0.002],
+        [userLat, userLng - 0.001],
+        [userLat + 0.005, userLng - 0.004],
+        [userLat + 0.010, userLng - 0.008]
+      ]
+    },
+    {
+      name: 'Neon Garden Avenue',
+      status: dynamicRoadStatus['Neon Garden Avenue'],
+      coordinates: [
+        [userLat - 0.005, userLng - 0.012],
+        [userLat, userLng - 0.008],
+        [userLat + 0.004, userLng + 0.001],
+        [userLat + 0.008, userLng + 0.008]
+      ]
+    },
+    {
+      name: 'Sentinel Ring Road',
+      status: dynamicRoadStatus['Sentinel Ring Road'],
+      coordinates: [
+        [userLat - 0.015, userLng - 0.005],
+        [userLat - 0.010, userLng - 0.005],
+        [userLat - 0.002, userLng + 0.006],
+        [userLat + 0.005, userLng + 0.012],
+        [userLat + 0.011, userLng + 0.015]
+      ]
+    }
+  ];
+
+  // 2. Translate dynamic incident offsets relative to coordinates
+  const incidents = dynamicIncidents.map(inc => ({
+    id: inc.id,
+    type: inc.type,
+    description: inc.description,
+    location: inc.location,
+    latitude: userLat + inc.latOffset,
+    longitude: userLng + inc.lngOffset,
+    severity: inc.severity,
+    pulse: inc.pulse,
+    reportedBy: inc.reportedBy
+  }));
+
+  // 3. Collect active user-reported incidents that have coordinates
+  const userIncidents = issueReports
+    .filter(r => r.latitude && r.longitude)
+    .map(r => ({
+      id: r.id,
+      type: r.type,
+      description: r.description,
+      location: r.location,
+      latitude: r.latitude!,
+      longitude: r.longitude!,
+      severity: r.type === 'broken-signal' || r.type === 'pothole' ? 'High' : 'Medium',
+      pulse: true,
+      reportedBy: 'Civic Report'
+    }));
+
+  const allIncidents = [...userIncidents, ...incidents];
+
+  // 4. Generate dynamic incident heatmap data spots
+  const heatmapPoints = allIncidents.map(inc => ({
+    latitude: inc.latitude,
+    longitude: inc.longitude,
+    intensity: inc.severity === 'High' ? 0.95 : inc.severity === 'Medium' ? 0.65 : 0.4
+  }));
+
+  res.json({
+    center: [userLat, userLng],
+    roads,
+    incidents: allIncidents,
+    heatmap: heatmapPoints
+  });
+});
+
+// Calculate live road safety risk percentage based on parameters
+app.get('/api/risk', (req: Request, res: Response) => {
+  const speed = parseFloat(req.query.speed as string) || 40;
+  const weather = (req.query.weather as string) || 'Clear';
+  const timeOfDay = (req.query.time as string) || 'Day';
+
+  let baseRisk = 12;
+
+  // Speed factor logic
+  if (speed > 100) {
+    baseRisk += 58;
+  } else if (speed > 80) {
+    baseRisk += 42;
+  } else if (speed > 60) {
+    baseRisk += 26;
+  } else if (speed > 40) {
+    baseRisk += 10;
+  }
+
+  // Environmental factors
+  if (weather === 'Rainy') {
+    baseRisk += 16;
+  } else if (weather === 'Foggy') {
+    baseRisk += 24;
+  }
+
+  if (timeOfDay === 'Night') {
+    baseRisk += 10;
+  }
+
+  const finalScore = Math.min(100, Math.max(0, baseRisk));
+
+  let classification: 'Safe' | 'Risky' | 'Dangerous' = 'Safe';
+  let recommendations: string[] = [];
+
+  if (finalScore >= 70) {
+    classification = 'Dangerous';
+    recommendations = [
+      'CRITICAL DANGER: Slow down immediately! Road friction limits severely reduced.',
+      'Rescue Spirit says: High hydroplaning hazard. Keep active hazards and maintain a 50m vehicle gap. 🚑👼',
+      'Traffic Sensei says: Class dismissed, pull over! Speeds are mathematically illegal under these factors. 🛑'
+    ];
+  } else if (finalScore >= 40) {
+    classification = 'Risky';
+    recommendations = [
+      'MODERATE RISK: Surface friction and visibility are degraded.',
+      'Road Guardian says: Shield up! Watch out for pothole spots and slow pedestrian zones. 🚧🛡️',
+      'Traffic Sensei says: Ease off the accelerator! Stay disciplined on these tarmac bends. 🚦'
+    ];
+  } else {
+    classification = 'Safe';
+    recommendations = [
+      'OPTIMAL DRIVE INDEX: Road variables are within safe levels.',
+      'Traffic Sensei says: Excellent safety discipline. Keep wearing helmets and buckle up! 🚦🚗',
+      'Road Guardian says: Paths ahead are quiet and secure. Enjoy your journey! 🛡️'
+    ];
+  }
+
+  res.json({
+    riskScore: finalScore,
+    classification,
+    recommendations
+  });
+});
+
 // Post a new road issue
 app.post('/api/report', (req: Request, res: Response) => {
   const { type, description, location, latitude, longitude, image } = req.body;
@@ -267,13 +563,20 @@ app.post('/api/report', (req: Request, res: Response) => {
 
   const authority = mockAuthorities[type as keyof typeof mockAuthorities];
 
+  // Dynamically place new incidents in user proximity if no coordinates are input
+  const defaultLat = 12.9716;
+  const defaultLng = 77.5946;
+  
+  const finalLat = latitude ? parseFloat(latitude) : (defaultLat + (Math.random() - 0.5) * 0.012);
+  const finalLng = longitude ? parseFloat(longitude) : (defaultLng + (Math.random() - 0.5) * 0.012);
+
   const newReport: RoadIssueReport = {
     id: `rep-${Date.now()}`,
     type,
     description,
     location,
-    latitude: latitude ? parseFloat(latitude) : undefined,
-    longitude: longitude ? parseFloat(longitude) : undefined,
+    latitude: finalLat,
+    longitude: finalLng,
     image,
     status: 'Reported',
     authority,

@@ -16,8 +16,18 @@ import {
   LifeBuoy,
   FileImage,
   Layers,
-  ArrowRight
+  Sun,
+  CloudRain,
+  CloudFog,
+  Moon,
+  Gauge,
+  RefreshCw,
+  Signal,
+  MessageCircle,
+  X
 } from 'lucide-react';
+import MapContainer from './components/MapContainer';
+import RiskSpeedometer from './components/RiskSpeedometer';
 
 // ==========================================
 // 1. LIGHTWEIGHT INLINE ANIME SVGs
@@ -164,12 +174,101 @@ export default function App() {
   ]);
   const [isTyping, setIsTyping] = useState(false);
 
+  // ==========================================
+  // SIMULATION & MAP CONTROL STATES
+  // ==========================================
+  const [speedSim, setSpeedSim] = useState(40);
+  const [weatherSim, setWeatherSim] = useState<'Clear' | 'Rainy' | 'Foggy'>('Clear');
+  const [timeSim, setTimeSim] = useState<'Day' | 'Night'>('Day');
+  const [mapLayer, setMapLayer] = useState<'standard' | 'traffic' | 'heatmap'>('traffic');
+  const [floatingChatOpen, setFloatingChatOpen] = useState(false);
+
+  const [mapData, setMapData] = useState<{
+    roads: any[];
+    incidents: any[];
+    heatmap: any[];
+    center: number[];
+  }>({
+    roads: [],
+    incidents: [],
+    heatmap: [],
+    center: [12.9716, 77.5946]
+  });
+
+  const [riskData, setRiskData] = useState<{
+    riskScore: number;
+    classification: 'Safe' | 'Risky' | 'Dangerous';
+    recommendations: string[];
+  }>({
+    riskScore: 12,
+    classification: 'Safe',
+    recommendations: [
+      'OPTIMAL FLOW: Drive within local speed parameters.',
+      'Traffic Sensei says: Well done, young driver! Keep wearing safety seatbelts/helmets.'
+    ]
+  });
+
   // Load Rule engine and Emergency services initial data
   useEffect(() => {
     fetchRules();
     fetchReports();
     autoDetectLocation();
   }, []);
+
+  // Fetch dynamic map data coordinates (with real-time polling every 3.5s)
+  useEffect(() => {
+    const lat = gpsCoords?.lat || 12.9716;
+    const lng = gpsCoords?.lng || 77.5946;
+    
+    // Initial load
+    fetchMapData(lat, lng);
+    
+    // Set up polling interval for real-time traffic corridor fluctuation & dynamic incidents
+    const interval = setInterval(() => {
+      fetchMapData(lat, lng);
+    }, 3500);
+    
+    return () => clearInterval(interval);
+  }, [gpsCoords, reports]);
+
+  // Fetch dynamic risk calculations
+  useEffect(() => {
+    fetchRiskCalculations();
+  }, [speedSim, weatherSim, timeSim]);
+
+  const fetchMapData = async (lat: number, lng: number) => {
+    try {
+      const res = await fetch(`/api/map-data?lat=${lat}&lng=${lng}`);
+      if (res.ok) {
+        const data = await res.json();
+        setMapData(data);
+      }
+    } catch (e) {
+      console.error("Map connection failed:", e);
+    }
+  };
+
+  const fetchRiskCalculations = async () => {
+    try {
+      const res = await fetch(`/api/risk?speed=${speedSim}&weather=${weatherSim}&time=${timeSim}`);
+      if (res.ok) {
+        const data = await res.json();
+        setRiskData(data);
+      }
+    } catch (e) {
+      console.error("Risk score connection failed:", e);
+    }
+  };
+
+  // Helper when clicking coordinates on map to auto-fill land-mark reporting form
+  const handleMapClick = (lat: number, lng: number) => {
+    setReportLoc(`Map Picked: [${lat.toFixed(4)}, ${lng.toFixed(4)}]`);
+    setActiveTab('reporter');
+    
+    setActiveCharacter('Road Guardian');
+    setCharacterMessage(`Excellent choice! Landmark coordinates selected at [${lat.toFixed(4)}, ${lng.toFixed(4)}]. Write the details and submit!`);
+    setCharacterMood('happy');
+  };
 
   const autoDetectLocation = () => {
     if (navigator.geolocation) {
@@ -530,263 +629,244 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.2 }}
-              className="space-y-8"
+              className="space-y-6"
             >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* CYBERPUNK SCROLLING NEON ALERTS MARQUEE */}
+              <div className="w-full bg-slate-950/80 border border-slate-800/80 rounded-2xl py-2.5 px-4 overflow-hidden relative shadow-[inset_0_0_10px_rgba(0,0,0,0.8)]">
+                <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-slate-950 to-transparent z-10" />
+                <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-slate-950 to-transparent z-10" />
                 
-                {/* Rule Lookup Trigger Panel */}
-                <div 
-                  onClick={() => setActiveTab('rules')}
-                  className="glass-panel rounded-3xl p-6 glass-panel-hover cursor-pointer relative overflow-hidden group border border-slate-800"
-                >
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-xl group-hover:bg-amber-500/10 transition duration-300" />
-                  <div className="p-3 bg-amber-500/10 text-amber-400 rounded-2xl w-max mb-5 border border-amber-500/20">
-                    <FileText className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-2 group-hover:text-amber-400 transition">DriveLegal Guide</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed mb-4">
-                    Explore traffic rules, fine amounts, legal severity levels and receive training dialogue instructions from Traffic Sensei.
-                  </p>
-                  <span className="text-amber-400 font-semibold text-xs flex items-center">
-                    Launch Rule Search <ArrowRight className="w-4 h-4 ml-1.5 transition-transform group-hover:translate-x-1" />
+                <div className="animate-marquee whitespace-nowrap flex items-center space-x-8 text-xs font-mono font-bold tracking-wider text-rose-450 uppercase">
+                  <span className="flex items-center text-rose-500">
+                    <span className="w-2 h-2 rounded-full bg-rose-500 mr-2 animate-ping" />
+                    BROADCAST: Cyber Bypass Highway heavy congested due to two-wheeler skid. lane partially blocked!
+                  </span>
+                  <span className="text-slate-600">•</span>
+                  <span className="flex items-center text-sky-400">
+                    <span className="w-2 h-2 rounded-full bg-sky-400 mr-2 animate-pulse" />
+                    RADAR: Police helmet checks and radar speed traps active near Neon Garden Crossing.
+                  </span>
+                  <span className="text-slate-600">•</span>
+                  <span className="flex items-center text-amber-400">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 mr-2" />
+                    ADVISORY: Traffic Sensei says: Click seatbelts and wear certified helmets at all times!
                   </span>
                 </div>
+              </div>
 
-                {/* Reporting Trigger Panel */}
-                <div 
-                  onClick={() => setActiveTab('reporter')}
-                  className="glass-panel rounded-3xl p-6 glass-panel-hover cursor-pointer relative overflow-hidden group border border-slate-800"
-                >
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl group-hover:bg-indigo-500/10 transition duration-300" />
-                  <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-2xl w-max mb-5 border border-indigo-500/20">
-                    <AlertTriangle className="w-6 h-6" />
+              {/* DYNAMIC TOP STATS ANALYTICS BAR */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                {/* Stats 1: Incidents */}
+                <div className="glass-panel rounded-3xl p-5 border border-slate-800 flex items-center justify-between relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-rose-500/5 rounded-full blur-xl group-hover:bg-rose-500/10 transition" />
+                  <div className="space-y-1">
+                    <span className="text-[10px] text-slate-500 uppercase tracking-widest font-extrabold block">Active Incidents</span>
+                    <span className="text-2xl font-black font-mono text-slate-100 flex items-center">
+                      {mapData.incidents.length}
+                      <span className="text-rose-500 text-xs ml-2 font-bold font-sans tracking-normal bg-rose-500/10 border border-rose-500/20 px-1.5 py-0.5 rounded-md">LIVE</span>
+                    </span>
                   </div>
-                  <h3 className="text-xl font-bold mb-2 group-hover:text-indigo-400 transition">RoadWatch Reporter</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed mb-4">
-                    Instantly report potholes, non-functional signals, and road damage. Monitored closely by the Road Guardian protect team.
-                  </p>
-                  <span className="text-indigo-400 font-semibold text-xs flex items-center">
-                    File Road Report <ArrowRight className="w-4 h-4 ml-1.5 transition-transform group-hover:translate-x-1" />
-                  </span>
+                  <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500">
+                    <AlertTriangle className="w-5 h-5 animate-pulse" />
+                  </div>
                 </div>
 
-                {/* SOS Trigger Panel */}
-                <div 
-                  onClick={() => setActiveTab('emergency')}
-                  className="glass-panel rounded-3xl p-6 glass-panel-hover cursor-pointer relative overflow-hidden group border border-slate-800"
-                >
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 rounded-full blur-xl group-hover:bg-rose-500/10 transition duration-300" />
-                  <div className="p-3 bg-rose-500/10 text-rose-400 rounded-2xl w-max mb-5 border border-rose-500/20">
-                    <PhoneCall className="w-6 h-6" />
+                {/* Stats 2: Proximity Risk */}
+                <div className="glass-panel rounded-3xl p-5 border border-slate-800 flex items-center justify-between relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-amber-500/5 rounded-full blur-xl group-hover:bg-amber-500/10 transition" />
+                  <div className="space-y-1">
+                    <span className="text-[10px] text-slate-500 uppercase tracking-widest font-extrabold block">Proximity Risk</span>
+                    <span className={`text-2xl font-black font-mono flex items-center uppercase ${
+                      riskData.riskScore > 70 ? 'text-rose-500' : riskData.riskScore > 40 ? 'text-amber-400' : 'text-emerald-400'
+                    }`}>
+                      {riskData.riskScore}%
+                    </span>
                   </div>
-                  <h3 className="text-xl font-bold mb-2 group-hover:text-rose-400 transition">RoadSOS Emergency</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed mb-4">
-                    Broadcast immediate safety beacons, lock down live locations, and fetch nearby hospital clinics with Rescue Spirit.
-                  </p>
-                  <span className="text-rose-400 font-semibold text-xs flex items-center">
-                    Open SOS Centers <ArrowRight className="w-4 h-4 ml-1.5 transition-transform group-hover:translate-x-1" />
-                  </span>
+                  <div className={`p-3 rounded-2xl border ${
+                    riskData.riskScore > 70 ? 'bg-rose-500/10 border-rose-500/20 text-rose-500' :
+                    riskData.riskScore > 40 ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' :
+                    'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
+                  }`}>
+                    <Gauge className="w-5 h-5" />
+                  </div>
+                </div>
+
+                {/* Stats 3: Location */}
+                <div className="glass-panel rounded-3xl p-5 border border-slate-800 flex items-center justify-between relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-sky-500/5 rounded-full blur-xl group-hover:bg-sky-500/10 transition" />
+                  <div className="space-y-1 min-w-0">
+                    <span className="text-[10px] text-slate-500 uppercase tracking-widest font-extrabold block">Locked Proximity</span>
+                    <span className="text-sm font-extrabold text-slate-200 block truncate">
+                      {gpsCoords ? `${gpsCoords.lat.toFixed(4)}°N, ${gpsCoords.lng.toFixed(4)}°E` : 'Auto-Locating...'}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-400">
+                    <MapPin className="w-5 h-5" />
+                  </div>
+                </div>
+
+                {/* Stats 4: Climate Sim controls */}
+                <div className="glass-panel rounded-3xl p-4 border border-slate-800 relative overflow-hidden flex flex-col justify-center">
+                  <span className="text-[9px] text-slate-500 uppercase tracking-widest font-extrabold block mb-2">Climate Environment Simulator</span>
+                  <div className="flex items-center space-x-2">
+                    {/* Clear Button */}
+                    <button
+                      type="button"
+                      onClick={() => setWeatherSim('Clear')}
+                      className={`flex-1 p-2 rounded-xl border flex items-center justify-center transition duration-150 ${
+                        weatherSim === 'Clear' ? 'bg-indigo-500/15 border-indigo-500 text-indigo-400' : 'bg-slate-950 border-slate-850 text-slate-400 hover:text-white'
+                      }`}
+                      title="Clear Weather"
+                    >
+                      <Sun className="w-4 h-4" />
+                    </button>
+                    {/* Rainy Button */}
+                    <button
+                      type="button"
+                      onClick={() => setWeatherSim('Rainy')}
+                      className={`flex-1 p-2 rounded-xl border flex items-center justify-center transition duration-150 ${
+                        weatherSim === 'Rainy' ? 'bg-indigo-500/15 border-indigo-500 text-indigo-400' : 'bg-slate-950 border-slate-850 text-slate-400 hover:text-white'
+                      }`}
+                      title="Monsoon Rain"
+                    >
+                      <CloudRain className="w-4 h-4 animate-bounce" />
+                    </button>
+                    {/* Foggy Button */}
+                    <button
+                      type="button"
+                      onClick={() => setWeatherSim('Foggy')}
+                      className={`flex-1 p-2 rounded-xl border flex items-center justify-center transition duration-150 ${
+                        weatherSim === 'Foggy' ? 'bg-indigo-500/15 border-indigo-500 text-indigo-400' : 'bg-slate-950 border-slate-850 text-slate-400 hover:text-white'
+                      }`}
+                      title="Heavy Fog"
+                    >
+                      <CloudFog className="w-4 h-4" />
+                    </button>
+                    {/* Time toggler */}
+                    <button
+                      type="button"
+                      onClick={() => setTimeSim(timeSim === 'Day' ? 'Night' : 'Day')}
+                      className={`flex-1 p-2 rounded-xl border flex items-center justify-center transition duration-150 ${
+                        timeSim === 'Night' ? 'bg-indigo-500/15 border-indigo-500 text-indigo-400' : 'bg-slate-950 border-slate-850 text-slate-400 hover:text-white'
+                      }`}
+                      title="Toggle Day/Night Cycle"
+                    >
+                      {timeSim === 'Day' ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-sky-400" />}
+                    </button>
+                  </div>
                 </div>
 
               </div>
 
-              {/* Core System Dashboard Details */}
+              {/* MAIN HERO RADAR & RISK GAUGE ROW */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
-                {/* Left col: Live safety feeds and alerts */}
-                <div className="lg:col-span-2 space-y-6">
-                  
-                  {/* MINI DASHBOARD INSIGHTS */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Weekly Safety Trend Chart */}
-                    <div className="glass-panel rounded-3xl p-5 border border-slate-800 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-450">Weekly Risk Trend</h4>
-                          <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono font-bold">Safe Drive: 85%</span>
-                        </div>
-                        <p className="text-[10px] text-slate-500 mb-3">Calculated index based on simulated local drive patterns.</p>
-                      </div>
-                      
-                      {/* Premium pure-CSS coordinates chart */}
-                      <div className="h-16 flex items-end space-x-2.5 pt-2">
-                        {[40, 25, 60, 30, 95, 20, 15].map((val, idx) => (
-                          <div key={idx} className="flex-1 flex flex-col items-center group relative cursor-pointer">
-                            {/* Tooltip on hover */}
-                            <div className="absolute bottom-full mb-1 bg-slate-900 border border-slate-800 text-[8px] text-slate-350 font-mono px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">
-                              {val}% Risk
-                            </div>
-                            {/* Vertical Bar */}
-                            <div 
-                              className={`w-full rounded-t-md transition-all duration-500 ${
-                                val > 80 ? 'bg-gradient-to-t from-rose-600/50 to-rose-450/90' :
-                                val > 40 ? 'bg-gradient-to-t from-amber-600/50 to-amber-450/90' :
-                                'bg-gradient-to-t from-emerald-600/50 to-emerald-450/90'
-                              }`}
-                              style={{ height: `${val}%` }}
-                            />
-                            <span className="text-[8px] text-slate-500 font-mono mt-1">
-                              {['M', 'T', 'W', 'T', 'F', 'S', 'S'][idx]}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Recent Checks & Rotating Safety Tip */}
-                    <div className="glass-panel rounded-3xl p-5 border border-slate-800 flex flex-col justify-between space-y-4">
-                      <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-450 mb-2">Checked Violation Logs</h4>
-                        {recentChecks.length === 0 ? (
-                          <p className="text-[10px] text-slate-500 italic py-2">Select violations in "DriveLegal Rules" tab to see logs.</p>
-                        ) : (
-                          <div className="space-y-1.5">
-                            {recentChecks.map((rule) => (
-                              <div key={rule.id} className="flex items-center justify-between text-xs p-1.5 bg-slate-950/50 rounded-lg border border-slate-850/50">
-                                <span className="font-semibold text-slate-300">{rule.type}</span>
-                                <span className={`px-1.5 py-0.5 text-[8px] rounded-md font-mono ${
-                                  rule.riskScore > 80 ? 'bg-rose-950/50 text-rose-400 border border-rose-500/20' :
-                                  rule.riskScore > 50 ? 'bg-amber-950/50 text-amber-400 border border-amber-500/20' :
-                                  'bg-emerald-950/50 text-emerald-400 border border-emerald-500/20'
-                                }`}>
-                                  {rule.riskScore}% Risk
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Dynamic character driving tip */}
-                      <div className="border-t border-slate-800/80 pt-2 flex items-center space-x-2">
-                        <div className="w-5 h-5 bg-sky-500/10 border border-sky-500/20 rounded-md shrink-0 flex items-center justify-center text-[10px]">
-                          💡
-                        </div>
-                        <div className="min-w-0">
-                          <span className="text-[8px] text-sky-400 font-extrabold uppercase tracking-wide block">Sensei Tip:</span>
-                          <p className="text-[9px] text-slate-400 truncate">
-                            {recentChecks.length > 0 
-                              ? `Safety score of ${recentChecks[0].type} is critical! Keep eyes active.`
-                              : "Keep a steady 3-second buffer space behind heavy trailer trucks."
-                            }
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="glass-panel rounded-3xl p-6 border border-slate-800">
-                    <h3 className="text-lg font-bold mb-4 flex items-center">
-                      <Layers className="w-5 h-5 text-amber-500 mr-2" />
-                      Live Community Safety Feed
-                    </h3>
-                    <div className="space-y-4">
-                      {reports.length === 0 ? (
-                        <div className="text-center py-6 text-slate-500 text-sm">
-                          No reports submitted yet. Submit your first road issue report!
-                        </div>
-                      ) : (
-                        reports.map((rep) => (
-                          <div key={rep.id} className="p-4 bg-slate-950/60 rounded-2xl border border-slate-800 flex items-start space-x-4">
-                            <div className={`p-2.5 rounded-xl border ${
-                              rep.type === 'pothole' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                              rep.type === 'broken-signal' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
-                              'bg-sky-500/10 text-sky-400 border-sky-500/20'
-                            }`}>
-                              <AlertTriangle className="w-5 h-5" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between mb-1">
-                                <h4 className="font-bold text-sm text-slate-200 capitalize">
-                                  {rep.type.replace('-', ' ')}
-                                </h4>
-                                <span className={`px-2 py-0.5 text-[9px] rounded-full font-semibold uppercase tracking-wider ${
-                                  rep.status === 'Resolved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                                  rep.status === 'Assigned' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                                  'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
-                                }`}>
-                                  {rep.status}
-                                </span>
-                              </div>
-                              <p className="text-xs text-slate-400 line-clamp-2 mb-2">{rep.description}</p>
-                              <div className="flex items-center text-[10px] text-slate-500 space-x-3">
-                                <span className="flex items-center">
-                                  <MapPin className="w-3 h-3 mr-1" />
-                                  {rep.location}
-                                </span>
-                                <span>•</span>
-                                <span>{rep.authority}</span>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
+                {/* Live Map Panel (Left 2/3 cols) */}
+                <div className="lg:col-span-2 h-[480px] w-full">
+                  <MapContainer
+                    userCoords={gpsCoords}
+                    roads={mapData.roads}
+                    incidents={mapData.incidents}
+                    heatmap={mapData.heatmap}
+                    onMapClick={handleMapClick}
+                    activeLayer={mapLayer}
+                    setActiveLayer={setMapLayer}
+                  />
                 </div>
 
-                {/* Right col: Character Intro Profiles */}
-                <div className="glass-panel rounded-3xl p-6 border border-slate-800 space-y-6">
-                  <h3 className="text-lg font-bold flex items-center">
-                    <Sparkles className="w-5 h-5 text-amber-400 mr-2" />
-                    Raasta Guardians
-                  </h3>
+                {/* Smart Risk Engine (Right 1/3 cols) */}
+                <div className="lg:col-span-1 flex flex-col gap-6">
                   
-                  <div className="space-y-4">
-                    {/* Character Card 1 */}
-                    <div 
-                      onClick={() => {
-                        setActiveCharacter('Traffic Sensei');
-                        setCharacterMessage('Speed limits and red lights are the foundation blocks of safe driving, young learner! Ask me anything.');
-                      }}
-                      className="p-3 bg-slate-950/40 rounded-2xl border border-slate-800/80 flex items-center space-x-3 hover:border-amber-500/30 cursor-pointer transition"
-                    >
-                      <div className="w-12 h-12 rounded-xl bg-amber-500/5 flex items-center justify-center shrink-0 border border-amber-500/20">
-                        <TrafficSenseiSVG />
+                  {/* Speedometer card */}
+                  <div className="flex-1 min-h-[300px]">
+                    <RiskSpeedometer
+                      score={riskData.riskScore}
+                      classification={riskData.classification}
+                      recommendations={riskData.recommendations}
+                    />
+                  </div>
+
+                  {/* Simulator Sliders Controller */}
+                  <div className="glass-panel rounded-3xl p-5 border border-slate-800 space-y-4">
+                    <span className="text-[10px] text-slate-500 uppercase tracking-widest font-extrabold block">Simulated Vehicle Parameters</span>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs font-semibold">
+                        <span className="text-slate-400">Current Velocity</span>
+                        <span className="font-mono text-indigo-400 text-sm font-bold">{speedSim} km/h</span>
                       </div>
-                      <div>
-                        <h4 className="font-bold text-xs text-slate-200">Traffic Sensei</h4>
-                        <p className="text-[10px] text-slate-400">Rules & Fines Instructor</p>
+                      <input
+                        type="range"
+                        min="0"
+                        max="140"
+                        value={speedSim}
+                        onChange={(e) => setSpeedSim(parseInt(e.target.value))}
+                        className="w-full h-1.5 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                      />
+                      <div className="flex items-center justify-between text-[9px] text-slate-500 font-mono pt-1">
+                        <span>0 KM/H (IDLE)</span>
+                        <span>60 KM/H (CITY)</span>
+                        <span>140 KM/H (MAX)</span>
                       </div>
                     </div>
 
-                    {/* Character Card 2 */}
-                    <div 
-                      onClick={() => {
-                        setActiveCharacter('Road Guardian');
-                        setCharacterMessage('I watch over the city tar roads! Crack, damages and craters must be reported in our portal instantly.');
-                      }}
-                      className="p-3 bg-slate-950/40 rounded-2xl border border-slate-800/80 flex items-center space-x-3 hover:border-sky-500/30 cursor-pointer transition"
-                    >
-                      <div className="w-12 h-12 rounded-xl bg-sky-500/5 flex items-center justify-center shrink-0 border border-sky-500/20">
-                        <RoadGuardianSVG />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-xs text-slate-200">Road Guardian</h4>
-                        <p className="text-[10px] text-slate-400">RoadWatch Protective Shield</p>
-                      </div>
-                    </div>
-
-                    {/* Character Card 3 */}
-                    <div 
-                      onClick={() => {
-                        setActiveCharacter('Rescue Spirit');
-                        setCharacterMessage('Breathe deeply and look for hospitals on SOS mode. I am here to coordinate safe emergency channels.');
-                      }}
-                      className="p-3 bg-slate-950/40 rounded-2xl border border-slate-800/80 flex items-center space-x-3 hover:border-rose-500/30 cursor-pointer transition"
-                    >
-                      <div className="w-12 h-12 rounded-xl bg-rose-500/5 flex items-center justify-center shrink-0 border border-rose-500/20">
-                        <RescueSpiritSVG />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-xs text-slate-200">Rescue Spirit</h4>
-                        <p className="text-[10px] text-slate-400">Accident Relief & Care Angel</p>
-                      </div>
+                    <div className="flex items-center justify-between border-t border-slate-800/80 pt-3 text-[10px] text-slate-550">
+                      <span className="flex items-center">
+                        <Signal className="w-3.5 h-3.5 text-emerald-500 mr-1.5" />
+                        Radar telemetry: active
+                      </span>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setSpeedSim(40);
+                          setWeatherSim('Clear');
+                          setTimeSim('Day');
+                        }}
+                        className="text-sky-400 font-extrabold hover:text-sky-300 transition flex items-center bg-transparent border-none p-0 cursor-pointer"
+                      >
+                        <RefreshCw className="w-3 h-3 mr-1" />
+                        Reset telemetry
+                      </button>
                     </div>
                   </div>
+
                 </div>
 
               </div>
+
+              {/* QUICK INLINE VIOLATIONS DIAL */}
+              <div className="glass-panel rounded-3xl p-6 border border-slate-800">
+                <h3 className="text-lg font-bold mb-4 flex items-center">
+                  <Layers className="w-5 h-5 text-amber-500 mr-2" />
+                  Quick DriveLegal Guide Lookout
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {(recentChecks.length > 0 ? recentChecks : rules.slice(0, 3)).map(rule => (
+                    <div 
+                      key={rule.id}
+                      onClick={() => {
+                        handleSelectRule(rule);
+                        setActiveTab('rules');
+                      }}
+                      className="p-4 bg-slate-950/60 hover:bg-slate-950 rounded-2xl border border-slate-850 hover:border-amber-500/25 transition cursor-pointer flex items-center justify-between group"
+                    >
+                      <div className="space-y-1">
+                        <span className="font-extrabold text-sm text-slate-200 group-hover:text-amber-400 transition">{rule.type}</span>
+                        <p className="text-[10px] text-slate-500 font-mono">Fine: {rule.fineAmount}</p>
+                      </div>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase ${
+                        rule.severity === 'Critical' ? 'bg-rose-500/15 text-rose-400' :
+                        rule.severity === 'High' ? 'bg-amber-500/15 text-amber-400' :
+                        'bg-sky-500/15 text-sky-400'
+                      }`}>
+                        {rule.severity}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
             </motion.div>
           )}
 
@@ -1369,6 +1449,127 @@ export default function App() {
         </AnimatePresence>
 
       </main>
+
+      {/* ==========================================
+          FLOATING AI ASSISTANT OVERLAY HUB
+         ========================================== */}
+      <div className="fixed bottom-6 right-6 z-[2000] flex flex-col items-end">
+        <AnimatePresence>
+          {floatingChatOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 30, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 30, scale: 0.9 }}
+              className="w-[320px] sm:w-[360px] h-[460px] bg-slate-900/95 border border-slate-800 rounded-3xl shadow-[0_10px_50px_rgba(0,0,0,0.65)] flex flex-col overflow-hidden mb-4 backdrop-blur-lg"
+            >
+              {/* Header */}
+              <div className="p-3.5 bg-slate-950/80 border-b border-slate-850 flex items-center justify-between">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
+                    {renderAvatarSVG()}
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-xs text-slate-200">{activeCharacter}</h4>
+                    <span className="text-[8px] text-indigo-400 font-bold uppercase tracking-wider block">Safety Counselor</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFloatingChatOpen(false)}
+                  className="p-1.5 bg-slate-950 border-none hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Quick swap buttons */}
+              <div className="p-2 bg-slate-950/40 border-b border-slate-850 flex items-center gap-1">
+                {['Traffic Sensei', 'Road Guardian', 'Rescue Spirit'].map((charName) => (
+                  <button
+                    key={charName}
+                    type="button"
+                    onClick={() => {
+                      setActiveCharacter(charName as any);
+                      const welcomeMsg = charName === 'Traffic Sensei' ? 'Speed limits and safety gear are essential parameters, learner!' :
+                                         charName === 'Road Guardian' ? 'I watch over the city tarmac! Report road damage directly.' :
+                                         'Gently now... I provide emergency guidelines and CPR coordinates.';
+                      setCharacterMessage(welcomeMsg);
+                      setChatHistory(prev => [...prev, { role: 'model', text: welcomeMsg, sender: charName }]);
+                    }}
+                    className={`flex-1 text-[9px] py-1 px-1 rounded-lg border font-extrabold tracking-wider uppercase transition truncate cursor-pointer ${
+                      activeCharacter === charName 
+                        ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400' 
+                        : 'bg-slate-950 border-slate-850 text-slate-500 hover:text-slate-350'
+                    }`}
+                  >
+                    {charName.split(' ')[0]}
+                  </button>
+                ))}
+              </div>
+
+              {/* Chat Message Box logs */}
+              <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-950/20">
+                {chatHistory.map((chat, idx) => (
+                  <div key={idx} className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[85%] rounded-2xl p-3 text-xs leading-relaxed border ${
+                      chat.role === 'user'
+                        ? 'bg-amber-500/15 border-amber-500/30 text-amber-300 rounded-tr-none'
+                        : 'bg-slate-900 border-slate-850 text-slate-350 rounded-tl-none'
+                    }`}>
+                      <span className="text-[8px] uppercase tracking-widest font-black text-slate-500 block mb-0.5">{chat.sender}</span>
+                      <p>{chat.text}</p>
+                    </div>
+                  </div>
+                ))}
+                {isTyping && (
+                  <div className="flex justify-start animate-pulse">
+                    <div className="bg-slate-900 border border-slate-850 rounded-2xl rounded-tl-none p-3 text-[10px] text-slate-550 italic">
+                      {activeCharacter} is formulating a response...
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Chat form footer */}
+              <form onSubmit={handleSendMessage} className="p-3 bg-slate-950/60 border-t border-slate-850 flex items-center space-x-2">
+                <input
+                  type="text"
+                  placeholder={`Chat with ${activeCharacter.split(' ')[0]}...`}
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  className="flex-1 bg-slate-950 border border-slate-850 rounded-xl p-2.5 text-xs focus:outline-none focus:border-indigo-500 text-slate-200"
+                />
+                <button
+                  type="submit"
+                  className="p-2 bg-indigo-550 hover:bg-indigo-650 text-slate-950 font-bold rounded-xl transition flex items-center justify-center shadow-lg border-none cursor-pointer"
+                >
+                  <Send className="w-3.5 h-3.5 text-slate-950" />
+                </button>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Floating Bubble Icon */}
+        <button
+          type="button"
+          onClick={() => setFloatingChatOpen(!floatingChatOpen)}
+          className={`p-4 rounded-full text-slate-950 font-bold hover:scale-105 active:scale-95 transition-all duration-200 shadow-2xl relative border flex items-center justify-center cursor-pointer ${
+            activeCharacter === 'Traffic Sensei' ? 'bg-amber-500 border-amber-400 shadow-glow-gold' :
+            activeCharacter === 'Road Guardian' ? 'bg-sky-500 border-sky-400 shadow-glow-blue' :
+            'bg-rose-500 border-rose-400 shadow-glow-red'
+          }`}
+        >
+          {floatingChatOpen ? <X className="w-6 h-6 text-slate-950" /> : <MessageCircle className="w-6 h-6 text-slate-950" />}
+          
+          {/* Pulsing indicator marker */}
+          {!floatingChatOpen && (
+            <div className="absolute top-[-3px] right-[-3px] w-4 h-4 bg-white border border-slate-900 rounded-full flex items-center justify-center text-[8px] font-black text-rose-600 animate-bounce">
+              1
+            </div>
+          )}
+        </button>
+      </div>
 
     </div>
   );
