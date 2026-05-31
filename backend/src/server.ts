@@ -2,14 +2,30 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { CloudLogger } from './services/cloudLogger.js';
+import { FirestoreService } from './services/firestoreService.js';
+import { AnalyticsService } from './services/analyticsService.js';
 
 // Static asset path resolution for production serving
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-// If transpiled to dist/server.js, the frontend build is located in ../../frontend/dist
-const frontendDistPath = path.join(__dirname, '../../frontend/dist');
+
+// Multi-path self-healing resolution strategy to locate React build static assets
+let frontendDistPath = path.join(__dirname, '../../frontend/dist');
+if (!fs.existsSync(path.join(frontendDistPath, 'index.html'))) {
+  const cwdDistPath = path.join(process.cwd(), 'frontend/dist');
+  if (fs.existsSync(path.join(cwdDistPath, 'index.html'))) {
+    frontendDistPath = cwdDistPath;
+  } else {
+    const relativeDistPath = path.join(process.cwd(), '../frontend/dist');
+    if (fs.existsSync(path.join(relativeDistPath, 'index.html'))) {
+      frontendDistPath = relativeDistPath;
+    }
+  }
+}
 
 // Load environment variables (resolving from root workspace directory)
 dotenv.config({ path: path.join(__dirname, '../../.env') });
@@ -724,22 +740,71 @@ Keep responses concise, extremely reassuring, and under 3-4 sentences. Inject em
 });
 
 // ==========================================
+// 4.5 OBSERVABILITY METRICS & LOGGING
+// ==========================================
+app.get('/api/metrics', async (req: Request, res: Response) => {
+  try {
+    CloudLogger.info('HTTP GET request received on /api/metrics');
+    const stats = await AnalyticsService.getSystemMetrics();
+    res.json(stats);
+  } catch (e) {
+    CloudLogger.error('Failed to resolve system metrics endpoint', e);
+    res.status(500).json({ error: 'Failed to retrieve observability telemetry metrics' });
+  }
+});
+
+// Route analytics logger callback
+app.post('/api/analytics/route', async (req: Request, res: Response) => {
+  try {
+    const { source, destination, selectedRoute, safetyIndex } = req.body;
+    CloudLogger.info('Received safe route logging request', { source, destination, selectedRoute, safetyIndex });
+    await AnalyticsService.logRouteSelection(source, destination, selectedRoute, safetyIndex);
+    await AnalyticsService.incrementMetricCounter('route_requests');
+    res.json({ success: true });
+  } catch (e) {
+    CloudLogger.error('Failed to log safe route request event', e);
+    res.status(500).json({ success: false });
+  }
+});
+
+// Incident watch / Emergency alert logger callback
+app.post('/api/analytics/event', async (req: Request, res: Response) => {
+  try {
+    const { eventType } = req.body;
+    CloudLogger.info(`Logging system event: ${eventType}`);
+    if (eventType === 'sos_alert') {
+      await AnalyticsService.incrementMetricCounter('emergency_requests');
+    } else if (eventType === 'report_filed') {
+      await AnalyticsService.incrementMetricCounter('alerts_generated');
+    }
+    res.json({ success: true });
+  } catch (e) {
+    CloudLogger.error('Failed to log system event callback', e);
+    res.status(500).json({ success: false });
+  }
+});
+
+// ==========================================
 // 5. PRODUCTION INTEGRATED FRONTEND SERVING
 // ==========================================
-if (NODE_ENV === 'production') {
-  console.log(`Serving static production assets from: ${frontendDistPath}`);
+// Self-healing check: serve the compiled React SPA if the build is present on disk,
+// OR if explicitly declared as production environment.
+const shouldServeFrontend = NODE_ENV === 'production' || fs.existsSync(path.join(frontendDistPath, 'index.html'));
+
+if (shouldServeFrontend) {
+  console.log(`[Self-Healing] Serving static production assets from: ${frontendDistPath}`);
   
   // Serve Vite React build static files
   app.use(express.static(frontendDistPath));
 
-  // Catch-all route to serve index.html for SPA router
+  // Catch-all route to serve index.html for SPA router (fallback for client-side routing)
   app.get('*', (req: Request, res: Response) => {
     res.sendFile(path.join(frontendDistPath, 'index.html'));
   });
 } else {
   // Simple welcome endpoint for dev mode
   app.get('/', (req: Request, res: Response) => {
-    res.send('RaastaSense Express API is running in Development mode!');
+    res.send('RaastaSense Express API is running in Development mode! (Build frontend to enable dashboard)');
   });
 }
 

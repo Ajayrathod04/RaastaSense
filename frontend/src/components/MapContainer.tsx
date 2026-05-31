@@ -35,6 +35,7 @@ interface MapContainerProps {
   onMapClick?: (lat: number, lng: number) => void;
   activeLayer: 'standard' | 'traffic' | 'heatmap';
   setActiveLayer: (layer: 'standard' | 'traffic' | 'heatmap') => void;
+  selectedRoute?: number[][];
 }
 
 export default function MapContainer({
@@ -44,7 +45,8 @@ export default function MapContainer({
   heatmap,
   onMapClick,
   activeLayer,
-  setActiveLayer
+  setActiveLayer,
+  selectedRoute
 }: MapContainerProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -252,10 +254,54 @@ export default function MapContainer({
       });
     }
 
+    // 4. Render Selected Safe Route if present (Neon glowing double path overlay)
+    if (selectedRoute && selectedRoute.length > 0) {
+      const routeCoords = selectedRoute.map(c => [c[0], c[1]] as L.LatLngExpression);
+      
+      // Outer neon violet aura polyline
+      L.polyline(routeCoords, {
+        color: '#c084fc',
+        weight: 8,
+        opacity: 0.5,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(layersGroup);
+
+      // Inner high-visibility cyan core polyline
+      L.polyline(routeCoords, {
+        color: '#22d3ee',
+        weight: 4.5,
+        opacity: 0.95,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(layersGroup);
+
+      // Add start/end beacons on route boundaries
+      const startPoint = routeCoords[0];
+      const endPoint = routeCoords[routeCoords.length - 1];
+
+      const greenPulseIcon = L.divIcon({
+        className: 'route-start-beacon',
+        html: `<div class="relative w-4 h-4 rounded-full bg-emerald-500 border border-white animate-pulse shadow-[0_0_8px_#10b981]"></div>`,
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+      });
+
+      const purplePulseIcon = L.divIcon({
+        className: 'route-end-beacon',
+        html: `<div class="relative w-4 h-4 rounded-full bg-purple-500 border border-white animate-pulse shadow-[0_0_8px_#a855f7]"></div>`,
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+      });
+
+      L.marker(startPoint, { icon: greenPulseIcon }).addTo(layersGroup).bindPopup('Route Start');
+      L.marker(endPoint, { icon: purplePulseIcon }).addTo(layersGroup).bindPopup('Route End / Destination');
+    }
+
     // Force redraw layout sizes
     setTimeout(() => map.invalidateSize(), 150);
 
-  }, [roads, incidents, heatmap, activeLayer]);
+  }, [roads, incidents, heatmap, activeLayer, selectedRoute]);
 
   // Recenter Helper
   const handleRecenter = () => {

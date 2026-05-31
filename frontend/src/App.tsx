@@ -24,10 +24,597 @@ import {
   RefreshCw,
   Signal,
   MessageCircle,
-  X
+  X,
+  Home,
+  Globe,
+  LineChart,
+  Activity,
+  Zap
 } from 'lucide-react';
 import MapContainer from './components/MapContainer';
 import RiskSpeedometer from './components/RiskSpeedometer';
+
+const TRANSLATIONS: Record<string, Record<string, string>> = {
+  en: {
+    tricolourBanner: "🇮🇳 SAFE ROADS • SMART INDIA • AI FOR EVERY RIDER",
+    heroTitle: "RaastaSense AI",
+    heroSubtitle: "India's Intelligent Road Safety Companion",
+    heroTagline: "Predict. Prevent. Protect.",
+    startJourney: "Start Journey",
+    exploreSafety: "Explore Safety Intelligence",
+    home: "Home",
+    dashboard: "Dashboard Hub",
+    rules: "DriveLegal Rules",
+    reporter: "RoadWatch Report",
+    emergency: "RoadSOS Emergency",
+    chat: "Character AI Chat",
+    analytics: "Safety Analytics",
+    settings: "System Settings",
+    riskLevel: "Risk Level",
+    currentZone: "Current Zone Safety",
+    roadCondition: "Road Condition",
+    enforcementAlerts: "Enforcement Alerts",
+    weatherImpact: "Weather Impact",
+    simulationPanel: "Live Road Intelligence Simulator",
+    accidentRisk: "Accident Risk Index",
+    trafficDensity: "Traffic Density",
+    roadHazards: "Road Hazard Alerts",
+    safetyScore: "Real-Time Safety Score",
+    activeIncidents: "Active Incidents",
+    congestionZones: "Congestion Zones",
+    policeAlerts: "Police Checkpoints",
+    construction: "Road Construction",
+    emergencyEvents: "Emergency Events",
+    whyMatters: "Why RaastaSense Matters",
+    whyMattersSubtitle: "National Telemetry & Preventive Safety Metrics",
+    whyMattersDesc: "India loses over 1.5 Lakh lives annually to road traffic accidents, resulting in ₹5.8 Lakh Crores of economic burden. RaastaSense deploys proactive real-time telemetry, state-level penalty transparency, and coordinate-locked rescue beacons to reduce accidents and safeguard the Golden Hour.",
+    whyMattersStat1: "1.5 Lakhs+",
+    whyMattersLabel1: "Annual Road Fatalities",
+    whyMattersStat2: "₹5.8 Lakh Cr",
+    whyMattersLabel2: "Economic Trauma Burden",
+    aiCrashPredictor: "AI Crash Predictor",
+    aiFatigueDetector: "AI Fatigue Detector",
+    aiRiskAnalyzer: "AI Risk Analyzer",
+    aiEmergencyAssistant: "AI Emergency Assistant",
+    aiSafeRouteAdvisor: "AI Safe Route Advisor",
+    aiRoadAnalyzer: "AI Road Analyzer",
+    sosAlert: "Broadcast Live SOS",
+    helpDispatched: "Emergency Rescue Unit Dispatched",
+    nearestHospital: "City General Hospital - 1.2 km away",
+    nearestPolice: "Central Police Station - 0.8 km away",
+    roadSenseAiAssistant: "RoadSense AI Assistant",
+    systemUptime: "System Uptime",
+    activeNodes: "Active Nodes",
+    alertsCreated: "Alerts Created",
+    routeRequests: "Route Solvers",
+    emergencyRequests: "Emergency Triggers",
+    observabilityTitle: "Google Cloud Observability Monitoring",
+    observabilitySub: "Real-Time Telemetry & Simulation Observability HUD"
+  },
+  hi: {
+    tricolourBanner: "🇮🇳 सुरक्षित सड़कें • स्मार्ट भारत • हर सवार के लिए AI",
+    heroTitle: "रास्तासेंस AI",
+    heroSubtitle: "भारत का बुद्धिमान सड़क सुरक्षा साथी",
+    heroTagline: "पूर्वानुमान। रोकथाम। सुरक्षा।",
+    startJourney: "यात्रा शुरू करें",
+    exploreSafety: "सुरक्षा खुफिया जानकारी खोजें",
+    home: "होम",
+    dashboard: "डैशबोर्ड हब",
+    rules: "ड्राइवलीगल नियम",
+    reporter: "रोडवॉच रिपोर्ट",
+    emergency: "रोडएसओएस आपातकाल",
+    chat: "कैरेक्टर एआई चैट",
+    analytics: "सुरक्षा विश्लेषण",
+    settings: "सिस्टम सेटिंग्स",
+    riskLevel: "जोखिम का स्तर",
+    currentZone: "वर्तमान क्षेत्र सुरक्षा",
+    roadCondition: "सड़क की स्थिति",
+    enforcementAlerts: "प्रवर्तन अलर्ट",
+    weatherImpact: "मौसम का प्रभाव",
+    simulationPanel: "लाइव सड़क खुफिया सिम्युलेटर",
+    accidentRisk: "दुर्घटना जोखिम सूचकांक",
+    trafficDensity: "यातायात घनत्व",
+    roadHazards: "सड़क जोखिम अलर्ट",
+    safetyScore: "वास्तविक समय सुरक्षा स्कोर",
+    activeIncidents: "सक्रिय घटनाएं",
+    congestionZones: "भीड़भाड़ वाले क्षेत्र",
+    policeAlerts: "पुलिस चौकियां",
+    construction: "सड़क निर्माण",
+    emergencyEvents: "आपातकालीन घटनाएं",
+    whyMatters: "रास्तासेंस क्यों महत्वपूर्ण है",
+    whyMattersSubtitle: "राष्ट्रीय टेलीमेट्री और निवारक सुरक्षा मेट्रिक्स",
+    whyMattersDesc: "सड़क दुर्घटनाओं में भारत हर साल 1.5 लाख से अधिक कीमती जानें खो देता है। रास्तासेंस सक्रिय वास्तविक समय टेलीमेट्री और एकीकृत आपातकालीन बीकन का उपयोग करके दुर्घटनाओं को रोकने और जीवन बचाने के लिए कार्य करता है।",
+    whyMattersStat1: "1.5 लाख+",
+    whyMattersLabel1: "वार्षिक सड़क मौतें",
+    whyMattersStat2: "₹5.8 लाख करोड़",
+    whyMattersLabel2: "आर्थिक आघात बोझ",
+    aiCrashPredictor: "AI क्रैश प्रिडिक्टर",
+    aiFatigueDetector: "AI थकान डिटेक्टर",
+    aiRiskAnalyzer: "AI जोखिम विश्लेषक",
+    aiEmergencyAssistant: "AI आपातकालीन सहायक",
+    aiSafeRouteAdvisor: "AI सुरक्षित मार्ग सलाहकार",
+    aiRoadAnalyzer: "AI सड़क विश्लेषक",
+    sosAlert: "लाइव एसओएस प्रसारित करें",
+    helpDispatched: "आपातकालीन बचाव दल रवाना",
+    nearestHospital: "सिटी जनरल अस्पताल - 1.2 किमी दूर",
+    nearestPolice: "केंद्रीय पुलिस थाना - 0.8 किमी दूर",
+    roadSenseAiAssistant: "रोडसेंस AI सहायक",
+    systemUptime: "सिस्टम अपटाइम",
+    activeNodes: "सक्रिय नोड्स",
+    alertsCreated: "निर्मित अलर्ट",
+    routeRequests: "मार्ग हल करने वाले",
+    emergencyRequests: "आपातकालीन ट्रिगर",
+    observabilityTitle: "गूगल क्लाउड ऑब्जर्वेबिलिटी मॉनिटरिंग",
+    observabilitySub: "वास्तविक समय टेलीमेट्री और सिमुलेशन ऑब्जर्वेबिलिटी HUD"
+  },
+  mr: {
+    tricolourBanner: "🇮🇳 सुरक्षित रस्ते • स्मार्ट भारत • प्रत्येक रायडरसाठी AI",
+    heroTitle: "रास्तासेन्स AI",
+    heroSubtitle: "भारताचा बुद्धिमान रस्ता सुरक्षा साथीदार",
+    heroTagline: "अंदाज वर्तवा. रोखा. सुरक्षित करा.",
+    startJourney: "प्रवास सुरू करा",
+    exploreSafety: "सुरक्षा बुद्धिमत्ता शोधा",
+    home: "होम",
+    dashboard: "डॅशबोर्ड हब",
+    rules: "ड्राइव्हलीगल नियम",
+    reporter: "रोडवॉच रिपोर्ट",
+    emergency: "रोडएसओएस आपत्कालीन",
+    chat: "कॅरेक्टर एआय चॅट",
+    analytics: "सुरक्षा विश्लेषण",
+    settings: "सिस्टम सेटिंग्ज",
+    riskLevel: "जोखिम पातळी",
+    currentZone: "सध्याची झोन सुरक्षा",
+    roadCondition: "रस्त्याची स्थिती",
+    enforcementAlerts: "अंमलबजावणी अलर्ट",
+    weatherImpact: "हवामानाचा प्रभाव",
+    simulationPanel: "लाइव्ह रस्ता बुद्धिमत्ता सिम्युलेटर",
+    accidentRisk: "अपघात जोखिम निर्देशांक",
+    trafficDensity: "रहदारीची घनता",
+    roadHazards: "रस्ता धोक्याचे अलर्ट",
+    safetyScore: "वास्तविक वेळ सुरक्षा स्कोअर",
+    activeIncidents: "सक्रिय घटना",
+    congestionZones: "गजबजलेले क्षेत्र",
+    policeAlerts: "पोलीस नाके",
+    construction: "रस्ता दुरुस्ती काम",
+    emergencyEvents: "आपत्कालीन घटना",
+    whyMatters: "रास्तासेन्स का महत्त्वाचा आहे",
+    whyMattersSubtitle: "राष्ट्रीय टेलिमेट्री आणि प्रतिबंधात्मक सुरक्षा मेट्रिक्स",
+    whyMattersDesc: "भारतात दरवर्षी रस्ते अपघातांमुळे १.५ लाखांहून अधिक लोक जीव गमावतात. रास्तासेन्स टेलिमेट्री आणि सुलभ बचाव मोहिमेच्या मदतीने अपघातांना आळा घालण्यासाठी कटिबद्ध आहे.",
+    whyMattersStat1: "१.५ लाख+",
+    whyMattersLabel1: "वार्षिक रस्ता मृत्यू",
+    whyMattersStat2: "₹५.८ लाख कोटी",
+    whyMattersLabel2: "आर्थिक आघात भार",
+    aiCrashPredictor: "AI क्रॅश प्रिडिक्टर",
+    aiFatigueDetector: "AI थकवा शोधक",
+    aiRiskAnalyzer: "AI जोखिम विश्लेषक",
+    aiEmergencyAssistant: "AI आपत्कालीन सहाय्यक",
+    aiSafeRouteAdvisor: "AI सुरक्षित मार्ग सल्लागार",
+    aiRoadAnalyzer: "AI रस्ता विश्लेषक",
+    sosAlert: "लाइव्ह एसओएस प्रसारित करा",
+    helpDispatched: "आपत्कालीन बचाव पथक रवाना",
+    nearestHospital: "सिटी जनरल रुग्णालय - १.२ किमी दूर",
+    nearestPolice: "मध्यवर्ती पोलीस ठाणे - ०.८ किमी दूर",
+    roadSenseAiAssistant: "रोडसेन्स AI सहाय्यक",
+    systemUptime: "सिस्टम अपटाइम",
+    activeNodes: "सक्रिय नोड्स",
+    alertsCreated: "तयार केलेले अलर्ट",
+    routeRequests: "मार्ग सोडवणारे",
+    emergencyRequests: "आपत्कालीन ट्रिगर",
+    observabilityTitle: "गूगल क्लाउड ऑब्झर्वेबिलिटी मॉनिटरिंग",
+    observabilitySub: "रिअल-टाइम टेलिमेट्री आणि सिम्युलेशन ऑब्झर्वेबिलिटी HUD"
+  },
+  ta: {
+    tricolourBanner: "🇮🇳 பாதுகாப்பான சாலைகள் • ஸ்மார்ட் இந்தியா • ஒவ்வொரு ரைடருக்கும் AI",
+    heroTitle: "ராஸ்தாசென்ஸ் AI",
+    heroSubtitle: "இந்தியாவின் புத்திசாலித்தனமான சாலை பாதுகாப்பு துணை",
+    heroTagline: "கணிப்போம். தடுப்போம். பாதுகாப்போம்.",
+    startJourney: "பயணத்தை தொடங்கு",
+    exploreSafety: "பாதுகாப்பு அறிவை ஆராய்",
+    home: "முகப்பு",
+    dashboard: "கட்டுப்பாட்டு மையம்",
+    rules: "டிரைவ்லீகல் விதிகள்",
+    reporter: "ரோடுவாட்ச் அறிக்கை",
+    emergency: "ரோடுஎஸ்ஓஎஸ் அவசரநிலை",
+    chat: "கேரக்டர் AI அரட்டை",
+    analytics: "பாதுகாப்பு பகுப்பாய்வு",
+    settings: "அமைப்பு அமைப்புகள்",
+    riskLevel: "ஆபத்து நிலை",
+    currentZone: "தற்போதைய மண்டல பாதுகாப்பு",
+    roadCondition: "சாலை நிலைமை",
+    enforcementAlerts: "அமலாக்க எச்சரிக்கைகள்",
+    weatherImpact: "வானிலை தாக்கம்",
+    simulationPanel: "நேரடி சாலை பாதுகாப்பு சிமுலேட்டர்",
+    accidentRisk: "விபத்து ஆபத்து குறியீடு",
+    trafficDensity: "போக்குவரத்து அடர்த்தி",
+    roadHazards: "சாலை ஆபத்து எச்சரிக்கைகள்",
+    safetyScore: "நேரடி பாதுகாப்பு மதிப்பெண்",
+    activeIncidents: "செயலில் உள்ள சம்பவங்கள்",
+    congestionZones: "போக்குவரத்து நெரிசல் பகுதிகள்",
+    policeAlerts: "காவல் சோதனைச் சாவடிகள்",
+    construction: "சாலை கட்டுமானம்",
+    emergencyEvents: "அவசர நிகழ்வுகள்",
+    whyMatters: "ஏன் ராஸ்தாசென்ஸ் முக்கியமானது",
+    whyMattersSubtitle: "தேசிய டெலிமெட்ரி & தடுப்பு பாதுகாப்பு அளவீடுகள்",
+    whyMattersDesc: "இந்தியாவில் ஆண்டுதோறும் சாலை விபத்துக்களால் 1.5 லட்சத்திற்கும் அதிகமான மக்கள் உயிர் இழக்கின்றனர். ராஸ்தாசென்ஸ் விபத்துக்களைத் தடுத்து உயிர்களைக் காக்க உதவுகிறது.",
+    whyMattersStat1: "1.5 லட்சம்+",
+    whyMattersLabel1: "ஆண்டு சாலை இறப்புகள்",
+    whyMattersStat2: "₹5.8 லட்சம் கோடி",
+    whyMattersLabel2: "பொருளாதார இழப்பு",
+    aiCrashPredictor: "AI விபத்து கணிப்பான்",
+    aiFatigueDetector: "AI சோர்வு கண்டறிவி",
+    aiRiskAnalyzer: "AI ஆபத்து பகுப்பாய்வி",
+    aiEmergencyAssistant: "AI அவசர உதவியாளர்",
+    aiSafeRouteAdvisor: "AI பாதுகாப்பான வழி ஆலோசகர்",
+    aiRoadAnalyzer: "AI சாலை பகுப்பாய்வி",
+    sosAlert: "நேரடி SOS ஒளிபரப்பு",
+    helpDispatched: "அவசர மீட்புக்குழு அனுப்பப்பட்டது",
+    nearestHospital: "சிட்டி ஜெனரல் மருத்துவமனை - 1.2 கி.மீ தொலைவில்",
+    nearestPolice: "மத்திய காவல் நிலையம் - 0.8 கி.மீ தொலைவில்",
+    roadSenseAiAssistant: "ரோடுசென்ஸ் AI உதவியாளர்",
+    systemUptime: "அமைப்பு நேரம்",
+    activeNodes: "செயலில் உள்ள முனைகள்",
+    alertsCreated: "உருவாக்கப்பட்ட விழிப்பூட்டல்கள்",
+    routeRequests: "வழி தீர்ப்பாளர்கள்",
+    emergencyRequests: "அவசர தூண்டுதல்கள்",
+    observabilityTitle: "கூகிள் கிளவுட் கண்காணிப்பு",
+    observabilitySub: "நேரடி டெலிமெட்ரி கண்காணிப்பு திரையகம்"
+  },
+  te: {
+    tricolourBanner: "🇮🇳 సురక్షితమైన రహదారులు • స్మార్ట్ ఇండియా • ప్రతి రైడర్ కోసం AI",
+    heroTitle: "రాస్తాసెన్స్ AI",
+    heroSubtitle: "భారతదేశపు ఇంటెలిజెంట్ రోడ్ సేఫ్టీ కంపానియన్",
+    heroTagline: "అంచనా వేయండి. నివారించండి. రక్షించండి.",
+    startJourney: "ప్రయాణం ప్రారంభించండి",
+    exploreSafety: "భద్రతా సమాచారాన్ని అన్వేషించండి",
+    home: "హోమ్",
+    dashboard: "డాష్‌బోర్డ్ హబ్",
+    rules: "డ్రైవ్‌లీగల్ నిబంధనలు",
+    reporter: "రోడ్‌వాచ్ నివేదిక",
+    emergency: "రోడ్ఎస్ఓఎస్ అత్యవసర స్థితి",
+    chat: "క్యారెక్టర్ AI చాట్",
+    analytics: "భద్రతా విశ్లేషణలు",
+    settings: "సిస్టమ్ సెట్టింగ్‌లు",
+    riskLevel: "ప్రమాద స్థాయి",
+    currentZone: "ప్రస్తుత జోన్ భద్రత",
+    roadCondition: "రోడ్డు పరిస్థితి",
+    enforcementAlerts: "అమలు హెచ్చరికలు",
+    weatherImpact: "వాతావరణ ప్రభావం",
+    simulationPanel: "లైవ్ రోడ్ ఇంటెలిజెన్స్ సిమ్యులేటర్",
+    accidentRisk: "ప్రమాద నష్ట సూచిక",
+    trafficDensity: "ట్రాఫిక్ సాంద్రత",
+    roadHazards: "రోడ్డు ప్రమాద హెచ్చరికలు",
+    safetyScore: "నిజ సమయ భద్రతా స్కోరు",
+    activeIncidents: "క్రియాశీల సంఘటనలు",
+    congestionZones: "ట్రాఫిక్ రద్దీ ప్రాంతాలు",
+    policeAlerts: "పోలీస్ తనిఖీ కేంద్రాలు",
+    construction: "రోడ్డు నిర్మాణం",
+    emergencyEvents: "అత్యవసర సంఘటనలు",
+    whyMatters: "రాస్తాసెన్స్ ఎందుకు ముఖ్యం",
+    whyMattersSubtitle: "జాతీయ టెలిమెట్రీ & నివారణ భద్రతా కొలమానాలు",
+    whyMattersDesc: "భారతదేశంలో ప్రతి సంవత్సరం రోడ్డు ప్రమాదాల వల్ల 1.5 లక్షల మంది ప్రాణాలు కోల్పోతున్నారు. రాస్తాసెన్స్ ప్రమాదాలను నివారించడానికి మరియు ప్రాణాలను రక్షించడానికి పనిచేస్తుంది.",
+    whyMattersStat1: "1.5 లక్షల+",
+    whyMattersLabel1: "వార్షిక రోడ్డు మరణాలు",
+    whyMattersStat2: "₹5.8 లక్షల కోట్లు",
+    whyMattersLabel2: "ఆర్థిక నష్టం",
+    aiCrashPredictor: "AI క్రాష్ ప్రిడిక్టర్",
+    aiFatigueDetector: "AI అలసట గుర్తింపు",
+    aiRiskAnalyzer: "AI ప్రమాద విశ్లేషకుడు",
+    aiEmergencyAssistant: "AI అత్యవసర సహాయకుడు",
+    aiSafeRouteAdvisor: "AI సురక్షిత మార్గ సలహాదారు",
+    aiRoadAnalyzer: "AI రోడ్డు విశ్లేషకుడు",
+    sosAlert: "లైవ్ SOS బ్రాడ్‌కాస్ట్",
+    helpDispatched: "అత్యవసర రెస్క్యూ యూనిట్ పంపబడింది",
+    nearestHospital: "సిటీ జనరల్ హాస్పిటల్ - 1.2 కి.మీ దూరంలో",
+    nearestPolice: "సెంట్రల్ పోలీస్ స్టేషన్ - 0.8 కి.మీ దూరంలో",
+    roadSenseAiAssistant: "రోడ్‌సెన్స్ AI సహాయకుడు",
+    systemUptime: "సిస్టమ్ అప్‌టైమ్",
+    activeNodes: "యాక్టివ్ నోడ్స్",
+    alertsCreated: "సృష్టించబడిన హెచ్చరికలు",
+    routeRequests: "మార్గ పరిష్కర్తలు",
+    emergencyRequests: "అత్యవసర ట్రిగ్గర్లు",
+    observabilityTitle: "గూగుల్ క్లౌడ్ అబ్జర్వబిలిటీ మానిటరింగ్",
+    observabilitySub: "రియల్-టైమ్ టెలిమెట్రీ మానిటరింగ్ HUD"
+  },
+  kn: {
+    tricolourBanner: "🇮🇳 ಸುರಕ್ಷಿತ ರಸ್ತೆಗಳು • ಸ್ಮಾರ್ಟ್ ಇಂಡಿಯಾ • ಪ್ರತಿಯೊಬ್ಬ ಸವಾರನಿಗೂ AI",
+    heroTitle: "ರಾಸ್ತಾಸೆನ್ಸ್ AI",
+    heroSubtitle: "ಭಾರತದ ಬುದ್ಧಿವಂತ ರಸ್ತೆ ಸುರಕ್ಷತಾ ಸಂಗಾತಿ",
+    heroTagline: "ಊಹಿಸಿ. ತಡೆಯಿರಿ. ರಕ್ಷಿಸಿ.",
+    startJourney: "ಪ್ರಯಾಣ ಪ್ರಾರಂಭಿಸಿ",
+    exploreSafety: "ಸುರಕ್ಷತಾ ಬುದ್ಧಿವಂತಿಕೆಯನ್ನು ಅನ್ವೇಷಿಸಿ",
+    home: "ಮುಖಪುಟ",
+    dashboard: "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಹಬ್",
+    rules: "ಡ್ರೈವ್‌ಲೀಗಲ್ ನಿಯಮಗಳು",
+    reporter: "ರೋಡ್‌ವಾಚ್ ವರದಿ",
+    emergency: "ರೋಡ್‌ಎಸ್‌ಒಎಸ್ ತುರ್ತುಸ್ಥಿತಿ",
+    chat: "ಕ್ಯಾರೆಕ್ಟರ್ AI ಚಾಟ್",
+    analytics: "ಸುರಕ್ಷತಾ ವಿಶ್ಲೇಷಣೆ",
+    settings: "ಸಿಸ್ಟಮ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
+    riskLevel: "ಅಪಾಯದ ಮಟ್ಟ",
+    currentZone: "ಪ್ರಸ್ತುತ ವಲಯ ಸುರಕ್ಷತೆ",
+    roadCondition: "ರಸ್ತೆ ಸ್ಥಿತಿ",
+    enforcementAlerts: "ಜಾರಿ ಎಚ್ಚರಿಕೆಗಳು",
+    weatherImpact: "ಹವಾಮಾನ ಪ್ರಭಾವ",
+    simulationPanel: "ಲೈವ್ ರಸ್ತೆ ಇಂಟೆಲಿಜೆನ್ಸ್ ಸಿಮ್ಯುಲೇಟರ್",
+    accidentRisk: "ಅಪಘಾತದ ಅಪಾಯದ ಸೂಚ್ಯಂಕ",
+    trafficDensity: "ಸಂಚಾರ ಸಾಂದ್ರತೆ",
+    roadHazards: "ರಸ್ತೆ ಅಪಾಯದ ಎಚ್ಚರಿಕೆಗಳು",
+    safetyScore: "ನೈಜ-ಸಮಯದ ಸುರಕ್ಷತಾ ಸ್ಕೋರ್",
+    activeIncidents: "ಸಕ್ರಿಯ ಘಟನೆಗಳು",
+    congestionZones: "ದಟ್ಟಣೆ ವಲಯಗಳು",
+    policeAlerts: "ಪೊಲೀಸ್ ತಪಾಸಣೆ ಕೇಂದ್ರಗಳು",
+    construction: "ರಸ್ತೆ ಕಾಮಗಾರಿ",
+    emergencyEvents: "ತುರ್ತು ಘಟನೆಗಳು",
+    whyMatters: "ರಾಸ್ತಾಸೆನ್ಸ್ ಏಕೆ ಮುಖ್ಯ",
+    whyMattersSubtitle: "ರಾಷ್ಟ್ರೀಯ ಟೆಲಿಮೆಟ್ರಿ ಮತ್ತು ತಡೆಗಟ್ಟುವ ಸುರಕ್ಷತೆಯ ಮಾಪನಗಳು",
+    whyMattersDesc: "ಭಾರತದಲ್ಲಿ ಪ್ರತಿ ವರ್ಷ ರಸ್ತೆ ಅಪಘಾತಗಳಿಂದ 1.5 ಲಕ್ಷಕ್ಕೂ ಹೆಚ್ಚು ಜನರು ಪ್ರಾಣ ಕಳೆದುಕೊಳ್ಳುತ್ತಿದ್ದಾರೆ. ರಾಸ್ತಾಸೆನ್ಸ್ ಅಪಘಾತಗಳನ್ನು ತಡೆಯಲು ಮತ್ತು ಜೀವಗಳನ್ನು ಉಳಿಸಲು ಸಹಾಯ ಮಾಡುತ್ತದೆ.",
+    whyMattersStat1: "1.5 ಲಕ್ಷಕ್ಕೂ ಹೆಚ್ಚು",
+    whyMattersLabel1: "ವಾರ್ಷಿಕ ರಸ್ತೆ ಸಾವುಗಳು",
+    whyMattersStat2: "₹5.8 ಲಕ್ಷ ಕೋಟಿ",
+    whyMattersLabel2: "ಆರ್ಥಿಕ ನಷ್ಟದ ಹೊರೆ",
+    aiCrashPredictor: "AI ಕ್ರ್ಯಾಶ್ ಪ್ರಿಡಿಕ್ಟರ್",
+    aiFatigueDetector: "AI ಆಯಾಸ ಪತ್ತೆಕಾರಕ",
+    aiRiskAnalyzer: "AI ಅಪಾಯದ ವಿಶ್ಲೇಷಕ",
+    aiEmergencyAssistant: "AI ತುರ್ತು ಸಹಾಯಕಿ",
+    aiSafeRouteAdvisor: "AI ಸುರಕ್ಷಿತ ಮಾರ್ಗ ಸಲಹೆಗಾರ",
+    aiRoadAnalyzer: "AI ರಸ್ತೆ ವಿಶ್ಲೇಷಕ",
+    sosAlert: "ಲೈವ್ SOS ಪ್ರಸಾರ",
+    helpDispatched: "ತುರ್ತು ರಕ್ಷಣಾ ತಂಡ ರವಾನೆಯಾಗಿದೆ",
+    nearestHospital: "ಸಿಟಿ ಜನರಲ್ ಆಸ್ಪತ್ರೆ - 1.2 ಕಿಮೀ ದೂರದಲ್ಲಿ",
+    nearestPolice: "ಕೇಂದ್ರ ಪೊಲೀಸ್ ಠಾಣೆ - 0.8 ಕಿಮೀ ದೂರದಲ್ಲಿ",
+    roadSenseAiAssistant: "ರೋಡ್‌ಸೆನ್ಸ್ AI ಸಹಾಯಕ",
+    systemUptime: "ಸಿಸ್ಟಮ್ ಅಪ್‌ಟೈಮ್",
+    activeNodes: "ಸಕ್ರಿಯ ನೋಡ್‌ಗಳು",
+    alertsCreated: "ರಚಿಸಲಾದ ಎಚ್ಚರಿಕೆಗಳು",
+    routeRequests: "ಮಾರ್ಗ ಪರಿಹಾರಕಗಳು",
+    emergencyRequests: "ತುರ್ತು ಪ್ರಚೋದಕಗಳು",
+    observabilityTitle: "ಗೂಗಲ್ ಕ್ಲೌಡ್ ಅಬ್ಸರ್ವಬಿಲಿಟಿ ಮಾನಿಟರಿಂಗ್",
+    observabilitySub: "ನೈಜ-ಸಮಯದ ಟೆಲಿಮೆಟ್ರಿ ಮಾನಿಟರಿಂಗ್ HUD"
+  },
+  gu: {
+    tricolourBanner: "🇮🇳 સુરક્ષિત રસ્તાઓ • સ્માર્ટ ઇન્ડિયા • દરેક રાઇડર માટે AI",
+    heroTitle: "રાસ્તાસેન્સ AI",
+    heroSubtitle: "ભારતનું બુદ્ધિશાળી રોડ સેફ્ટી સાથી",
+    heroTagline: "પૂર્વાનુમાન. નિવારણ. સુરક્ષા.",
+    startJourney: "યાત્રા શરૂ કરો",
+    exploreSafety: "ભદ્રતા માહિતી શોધો",
+    home: "હોમ",
+    dashboard: "ડેશબોર્ડ હબ",
+    rules: "ડ્રાઇવલીગલ નિયમો",
+    reporter: "રોડવોચ રિપોર્ટ",
+    emergency: "રોડએસઓએસ કટોકટી",
+    chat: "કેરેક્ટર એઆઇ ચેટ",
+    analytics: "સમગ્ર સુરક્ષા વિશ્લેષણ",
+    settings: "સિસ્ટમ સેટિંગ્સ",
+    riskLevel: "જોખમનું સ્તર",
+    currentZone: "વર્તમાન ઝોન સુરક્ષા",
+    roadCondition: "રસ્તાની સ્થિતિ",
+    enforcementAlerts: "અમલીકરણ ચેતવણીઓ",
+    weatherImpact: "હવામાન અસર",
+    simulationPanel: "લાઈવ રોડ ઈન્ટેલિજન્સ સિમ્યુલેટર",
+    accidentRisk: "અકસ્માત જોખમ સૂચકાંક",
+    trafficDensity: "ટ્રાફિક ઘનતા",
+    roadHazards: "રોડ જોખમ ચેતવણીઓ",
+    safetyScore: "વાસ્તવિક સમય સુરક્ષા સ્કોર",
+    activeIncidents: "સક્રિય ઘટનાઓ",
+    congestionZones: "ટ્રાફિક જામ વિસ્તારો",
+    policeAlerts: "પોલીસ ચેકપોઇન્ટ્સ",
+    construction: "રોડ કામગીરી",
+    emergencyEvents: "ઇમરજન્સી ઇવેન્ટ્સ",
+    whyMatters: "રાસ્તાસેન્સ શા માટે મહત્વનું છે",
+    whyMattersSubtitle: "રાષ્ટ્રીય ટેલિમેટ્રી અને નિવારક સુરક્ષા મેટ્રિક્સ",
+    whyMattersDesc: "ભારતમાં દર વર્ષે માર્ગ અકસ્માતમાં ૧.૫ લાખથી વધુ કીમતી જાન ગુમાવાય છે. રાસ્તાસેન્સ અકસ્માતો ઘટાડવા અને જાન બચાવવા માટે સતત કાર્યરત છે.",
+    whyMattersStat1: "૧.૫ લાખ+",
+    whyMattersLabel1: "વાર્ષિક માર્ગ અકસ્માત મૃત્યુ",
+    whyMattersStat2: "₹૫.૮ લાખ કરોડ",
+    whyMattersLabel2: "આર્થિક નુકસાન",
+    aiCrashPredictor: "AI ક્રેશ પ્રિડિક્ટર",
+    aiFatigueDetector: "AI થાક શોધક",
+    aiRiskAnalyzer: "AI જોખમ વિશ્લેષક",
+    aiEmergencyAssistant: "AI કટોકટી સહાયક",
+    aiSafeRouteAdvisor: "AI સૂરક્ષિત માર્ગ સલાહકાર",
+    aiRoadAnalyzer: "AI રોડ વિશ્લેષક",
+    sosAlert: "લાઈવ SOS પ્રસારિત કરો",
+    helpDispatched: "બચાવ ટુકડી રવાના કરવામાં આવી છે",
+    nearestHospital: "સિટી જનરલ હોસ્પિટલ - ૧.૨ કિમી દૂર",
+    nearestPolice: "સેન્ટ્રલ પોલીસ સ્ટેશન - ૦.૮ કિમી દૂર",
+    roadSenseAiAssistant: "રોડસેન્સ AI સહાયક",
+    systemUptime: "સિસ્ટમ અ uptime",
+    activeNodes: "સક્રિય નોડ્સ",
+    alertsCreated: "બનાવેલ ચેતવણીઓ",
+    routeRequests: "માર્ગ ઉકેલનારાઓ",
+    emergencyRequests: "કટોકટી ટ્રિગર્સ",
+    observabilityTitle: "ગૂગલ ક્લાઉડ ઓબ્ઝર્વેબિલિટી મોનિટરિંગ",
+    observabilitySub: "રીઅલ-ટાઇમ ટેલિમેટ્રી મોનિટરિંગ HUD"
+  },
+  pa: {
+    tricolourBanner: "🇮🇳 ਸੁਰੱਖਿਅਤ ਸੜਕਾਂ • ਸਮਾਰਟ ਭਾਰਤ • ਹਰ ਸਵਾਰ ਲਈ AI",
+    heroTitle: "ਰਾਸਤਾਸੈਂਸ AI",
+    heroSubtitle: "ਭਾਰਤ ਦਾ ਬੁੱਧੀਮਾਨ ਸੜਕ ਸੁਰੱਖਿਆ ਸਾਥੀ",
+    heroTagline: "ਪੂਰਵ ਅਨੁਮਾਨ। ਰੋਕਥਾਮ। ਸੁਰੱਖਿਆ।",
+    startJourney: "ਯਾਤਰਾ ਸ਼ੁਰੂ ਕਰੋ",
+    exploreSafety: "ਸੁਰੱਖਿਆ ਜਾਣਕਾਰੀ ਦੀ ਖੋਜ ਕਰੋ",
+    home: "ਹੋਮ",
+    dashboard: "ਡੈਸ਼ਬੋਰਡ ਹੱਬ",
+    rules: "ਡ੍ਰਾਈਵਲੀਗਲ ਨਿਯਮ",
+    reporter: "ਰੋਡਵਾਚ ਰਿਪੋਰਟ",
+    emergency: "ਰੋਡSOS ਐਮਰਜੈਂਸੀ",
+    chat: "ਕਰੈਕਟਰ AI ਚੈਟ",
+    analytics: "ਸੁਰੱਖਿਆ ਵਿਸ਼ਲੇਸ਼ਣ",
+    settings: "ਸਿਸਟਮ ਸੈਟਿੰਗਜ਼",
+    riskLevel: "ਜੋਖਮ ਦਾ ਪੱਧਰ",
+    currentZone: "ਮੌਜੂਦਾ ਜ਼ੋਨ ਸੁਰੱਖਿਆ",
+    roadCondition: "ਸੜਕ ਦੀ ਹਾਲਤ",
+    enforcementAlerts: "ਲਾਗੂ ਕਰਨ ਦੇ ਅਲਰਟ",
+    weatherImpact: "ਮੌਸਮ ਦਾ ਪ੍ਰਭਾਵ",
+    simulationPanel: "ਲਾਈਵ ਸੜਕ ਸੁਰੱਖਿਆ ਸਿਮੂਲੇਟਰ",
+    accidentRisk: "ਹਾਦਸਾ ਜੋਖਮ ਸੂਚਕਾਂਕ",
+    trafficDensity: "ਟ੍ਰੈਫਿਕ ਘਣਤਾ",
+    roadHazards: "ਸੜਕ ਜੋਖਮ ਅਲਰਟ",
+    safetyScore: "ਰੀਅਲ-ਟਾਈਮ ਸੁਰੱਖਿਆ ਸਕੋਰ",
+    activeIncidents: "ਸਰਗਰਮ ਘਟਨਾਵਾਂ",
+    congestionZones: "ਜਾਮ ਵਾਲੇ ਖੇਤਰ",
+    policeAlerts: "ਪੁਲਿਸ ਨਾਕੇ",
+    construction: "ਸੜਕ ਦੀ ਮੁਰੰਮਤ",
+    emergencyEvents: "ਐਮਰਜੈਂਸੀ ਘਟਨਾਵਾਂ",
+    whyMatters: "ਰਾਸਤਾਸੈਂਸ ਕਿਉਂ ਮਹੱਤਵਪੂਰਨ ਹੈ",
+    whyMattersSubtitle: "ਰਾਸ਼ਟਰੀ ਟੈਲੀਮੈਟਰੀ ਅਤੇ ਬਚਾਅ ਸੁਰੱਖਿਆ ਮੈਟ੍ਰਿਕਸ",
+    whyMattersDesc: "ਸੜਕ ਹਾદਸਿਆਂ ਵਿੱਚ ਭਾਰਤ ਹਰ ਸਾਲ 1.5 ਲੱਖ ਤੋਂ ਵੱਧ ਕੀਮਤੀ ਜਾਨਾਂ ਗੁਆ ਦਿੰਦਾ ਹੈ। ਰਾਸਤਾਸੈਂਸ ਹਾਦਸਿਆਂ ਨੂੰ ਰੋਕਣ ਅਤੇ ਜਾਨਾਂ ਬਚਾਉਣ ਲਈ ਸਰਗਰਮੀ ਨਾਲ ਕੰਮ ਕਰਦਾ ਹੈ।",
+    whyMattersStat1: "1.5 ਲੱਖ+",
+    whyMattersLabel1: "ਸਾਲਾਨา ਸੜਕ ਮੌਤਾਂ",
+    whyMattersStat2: "₹5.8 ਲੱਖ ਕਰੋੜ",
+    whyMattersLabel2: "ਆਰਥਿਕ ਬੋਝ",
+    aiCrashPredictor: "AI ਹਾਦਸਾ ਭਵਿੱਖਬਾਣੀ",
+    aiFatigueDetector: "AI ਥਕਾਵਟ ਖੋਜੀ",
+    aiRiskAnalyzer: "AI ਜੋਖਮ ਵਿਸ਼ਲੇਸ਼ਕ",
+    aiEmergencyAssistant: "AI ਐਮਰਜੈਂਸੀ ਸਹਾਇਕ",
+    aiSafeRouteAdvisor: "AI ਸੁਰੱਖਿਅਤ ਮਾਰਗ ਸਲਾਹਕਾਰ",
+    aiRoadAnalyzer: "AI ਸੜਕ ਵਿਸ਼ਲੇਸ਼ਕ",
+    sosAlert: "ਲਾਈਵ SOS ਪ੍ਰਸਾਰਿਤ ਕਰੋ",
+    helpDispatched: "ਐਮਰਜੈਂਸੀ ਬਚਾਅ ਦਲ ਰਵਾਨਾ",
+    nearestHospital: "ਸਿਟੀ ਜਨਰל ਹਸਪਤਾਲ - 1.2 ਕਿਲੋਮੀਟਰ ਦੂਰ",
+    nearestPolice: "ਕੇਂਦਰੀ ਪੁਲਿਸ ਥਾਣਾ - 0.8 ਕਿਲੋਮੀਟਰ ਦੂਰ",
+    roadSenseAiAssistant: "ਰੋਡਸੈਂਸ AI ਸਹਾਇक",
+    systemUptime: "ਸਿਸਟਮ ਅਪਟਾਈਮ",
+    activeNodes: "ਸਰਗਰਮ ਨੋਡ",
+    alertsCreated: "ਬਣਾਏ ਗਏ ਅਲਰਟ",
+    routeRequests: "ਮਾਰਗ ਹੱਲ ਕਰਨ ਵਾਲੇ",
+    emergencyRequests: "ਐਮਰਜੈਂਸੀ ਟ੍ਰਿਗਰ",
+    observabilityTitle: "ਗੂਗਲ ਕਲਾਊਡ ਨਿਗਰਾਨੀ",
+    observabilitySub: "ਰੀਅਲ-ਟਾਈਮ ਟੈਲੀਮੈਟਰੀ ਨਿਗਰਾਨੀ HUD"
+  },
+  bn: {
+    tricolourBanner: "🇮🇳 নিরাপদ সড়ক • スマート ভারত • প্রতিটি রাইডারের জন্য AI",
+    heroTitle: "রাস্তাসেন্স AI",
+    heroSubtitle: "ভারতের বুদ্ধিমান সড়ক নিরাপত্তা সঙ্গী",
+    heroTagline: "পূর্বাভাস। প্রতিরোধ। সুরক্ষা।",
+    startJourney: "যাত্রা শুরু করুন",
+    exploreSafety: "নিরাপত্তা তথ্য অনুসন্ধান করুন",
+    home: "হোম",
+    dashboard: "ড্যাশবোর্ড হাব",
+    rules: "ড্রাইভলিগাল নিয়ম",
+    reporter: "রোডওয়াচ রিপোর্ট",
+    emergency: "রোডSOS জরুরী অবস্থা",
+    chat: "ক্যারেক্টার AI চ্যাট",
+    analytics: "নিরাপত্তা বিশ্লেষণ",
+    settings: "সিস্টেম সেটিংস",
+    riskLevel: "ঝুঁকির মাত্রা",
+    currentZone: "বর্তমান জোনের নিরাপত্তা",
+    roadCondition: "রাস্তার অবস্থা",
+    enforcementAlerts: "আইন প্রয়োগকারী সতর্কতা",
+    weatherImpact: "আবহাওয়ার প্রভাব",
+    simulationPanel: "লাইভ সড়ক নিরাপত্তা সিমুলেটর",
+    accidentRisk: "দুর্ঘটনা ঝুঁকি সূচক",
+    trafficDensity: "যানজট ঘনত্ব",
+    roadHazards: "রাস্তা বিপদ সতর্কতা",
+    safetyScore: "রিয়েল-টাইม নিরাপত্তা স্কোর",
+    activeIncidents: "সক্রিয় ঘটনা",
+    congestionZones: "যানজট প্রবণ এলাকা",
+    policeAlerts: "পুলিশ চেকপয়েন্ট",
+    construction: "রাস্তা মেরামত",
+    emergencyEvents: "জরুরী ঘটনা",
+    whyMatters: "কেন রাস্তাসেন্স গুরুত্বপূর্ণ",
+    whyMattersSubtitle: "জাতীয় টেলিমেট্রি এবং প্রতিরোধমূলক নিরাপত্তা পরিমাপ",
+    whyMattersDesc: "ভারতে সড়ক দুর্ঘটনায় প্রতি বছর দেড় লক্ষেরও বেশি মানুষ প্রাণ হারায়। রাস্তাসেন্স দুর্ঘটনা প্রতিরোধ ও জীবন বাঁচাতে সক্রিয়ভাবে কাজ করে।",
+    whyMattersStat1: "১.৫ লক্ষ+",
+    whyMattersLabel1: "বার্ষিক সড়ক মৃত্যু",
+    whyMattersStat2: "₹৫.৮ লক্ষ কোটি",
+    whyMattersLabel2: "অর্থনৈতিক ক্ষতি",
+    aiCrashPredictor: "AI দুর্ঘটনা পূর্বাভাসক",
+    aiFatigueDetector: "AI ক্লান্তি সনাক্তকারী",
+    aiRiskAnalyzer: "AI ঝুঁকি বিশ্লেষক",
+    aiEmergencyAssistant: "AI জরুরী সহকারী",
+    aiSafeRouteAdvisor: "AI নিরাপদ পথ উপদেষ্টা",
+    aiRoadAnalyzer: "AI রাস্তা বিশ্লেষক",
+    sosAlert: "লাইভ SOS প্রচার করুন",
+    helpDispatched: "জরুরী উদ্ধারকারী দল পাঠানো হয়েছে",
+    nearestHospital: "সিটি জেনারেল হাসপাতাল - ১.২ কিমি দূরে",
+    nearestPolice: "কেন্দ্রীয় থানা - ০.৮ কিমি দূরে",
+    roadSenseAiAssistant: "রোডসেন্ট AI সহকারী",
+    systemUptime: "সিস্টেম আপটাইম",
+    activeNodes: "সক্রিয় নোড",
+    alertsCreated: "তৈরি সতর্কতা",
+    routeRequests: "পথ সমাধানকারী",
+    emergencyRequests: "জরুরী ট্রਿগার",
+    observabilityTitle: "গুগল ক্লাউড পর্যবেক্ষণ",
+    observabilitySub: "রিয়েল-টাইম টেলিমেট্রি পর্যবেক্ষণ HUD"
+  }
+};
+
+interface TransparencyReport {
+  id: string;
+  category: string;
+  landmark: string;
+  authority: string;
+  status: 'Resolved' | 'Pending' | 'In Progress';
+  budgetAllocated: string;
+  budgetSpent: string;
+  history: string[];
+  expectedDate: string;
+}
+
+const transparencyData: TransparencyReport[] = [
+  {
+    id: "RW-2026-08A",
+    category: "Pothole / Crater repair",
+    landmark: "Neon Garden Crossing (Outer Ring Road)",
+    authority: "Bruhat Bengaluru Mahanagara Palike (BBMP)",
+    status: "In Progress",
+    budgetAllocated: "₹2,50,000",
+    budgetSpent: "₹1,80,000",
+    history: [
+      "March 15, 2026: Incident reported by public watch",
+      "March 18, 2026: Site inspection completed by BBMP Engineer",
+      "April 02, 2026: Sub-contractor assigned & materials procured",
+      "April 15, 2026: Asphalt filling stage 1 completed"
+    ],
+    expectedDate: "June 15, 2026"
+  },
+  {
+    id: "RW-2026-12C",
+    category: "Streetlight darkness resolution",
+    landmark: "Electronic City Phase 2 Tollway Link",
+    authority: "Karnataka Power Transmission Corp (KPTCL)",
+    status: "Pending",
+    budgetAllocated: "₹1,20,000",
+    budgetSpent: "₹0",
+    history: [
+      "April 10, 2026: Grid outage report filed",
+      "April 20, 2026: Cable failure verified near tower 42"
+    ],
+    expectedDate: "July 01, 2026"
+  },
+  {
+    id: "RW-2026-04F",
+    category: "Broken Signal Light overhaul",
+    landmark: "IIT Madras Main Gate Intersection",
+    authority: "Greater Chennai Corporation (GCC)",
+    status: "Resolved",
+    budgetAllocated: "₹85,000",
+    budgetSpent: "₹83,500",
+    history: [
+      "February 02, 2026: Signal malfunction reported",
+      "February 05, 2026: Board controllers replaced",
+      "February 10, 2026: Final calibration & system restored"
+    ],
+    expectedDate: "Completed (Feb 10)"
+  },
+  {
+    id: "RW-2026-21X",
+    category: "Severe Road Damage patchwork",
+    landmark: "Indiranagar 100ft Road (Double Road Junction)",
+    authority: "Public Works Department (PWD)",
+    status: "In Progress",
+    budgetAllocated: "₹5,000,000",
+    budgetSpent: "₹3,20,000",
+    history: [
+      "January 12, 2026: Soil erosion & cracks reported",
+      "January 25, 2026: Excavation stage completed",
+      "March 05, 2026: Drainage piping replaced"
+    ],
+    expectedDate: "August 30, 2026"
+  }
+];
 
 // ==========================================
 // 1. LIGHTWEIGHT INLINE ANIME SVGs
@@ -139,7 +726,40 @@ interface EmergencyService {
 
 export default function App() {
   // Navigation & Primary Page State
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'rules' | 'reporter' | 'emergency' | 'chat'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'home' | 'dashboard' | 'rules' | 'reporter' | 'emergency' | 'chat' | 'analytics' | 'settings'>('home');
+  const [currentLang, setCurrentLang] = useState<'en' | 'hi' | 'mr' | 'ta' | 'te' | 'kn' | 'gu' | 'pa' | 'bn'>('en');
+
+  // Translation helper function
+  const t = (key: string): string => {
+    return TRANSLATIONS[currentLang]?.[key] || TRANSLATIONS['en']?.[key] || key;
+  };
+  
+  // Landmark Definitions for Route Engine
+  const LANDMARKS: Record<string, { lat: number; lng: number; name: string }> = {
+    'majestic': { lat: 12.9779, lng: 77.5724, name: 'Majestic Metro Station' },
+    'electronic-city': { lat: 12.8396, lng: 77.6775, name: 'Electronic City Tollgate' },
+    'whitefield': { lat: 12.9698, lng: 77.7500, name: 'Whitefield IT Hub' },
+    'indiranagar': { lat: 12.9784, lng: 77.6408, name: 'Indiranagar 100ft Rd' },
+    'koramangala': { lat: 12.9352, lng: 77.6244, name: 'Koramangala Sony Signal' },
+    'iitm-gate': { lat: 12.9915, lng: 80.2336, name: 'IIT Madras Gate' },
+    'adyar': { lat: 12.9975, lng: 80.2520, name: 'Adyar Circle' }
+  };
+
+  // Safe Route Engine States
+  const [routeSource, setRouteSource] = useState<string>('majestic');
+  const [routeDest, setRouteDest] = useState<string>('electronic-city');
+  const [selectedRouteOption, setSelectedRouteOption] = useState<'A' | 'B' | 'C'>('B');
+  const [selectedRouteCoords, setSelectedRouteCoords] = useState<number[][]>([]);
+
+  // RoadWatch Transparency Dashboard Sub-tab selector
+  const [transparencySubTab, setTransparencySubTab] = useState<'reporter' | 'transparency'>('reporter');
+  const [selectedTransparencyReport, setSelectedTransparencyReport] = useState<TransparencyReport | null>(transparencyData[0]);
+
+  // DriveLegal Location-Specific Filter State
+  const [selectedState, setSelectedState] = useState<string>('Karnataka');
+
+  // Golden Hour SOS Countdown states
+  const [countdownTime, setCountdownTime] = useState<number>(3600);
   
   // Rule Search Engine States
   const [rules, setRules] = useState<TrafficRule[]>([]);
@@ -236,6 +856,87 @@ export default function App() {
     fetchRiskCalculations();
   }, [speedSim, weatherSim, timeSim]);
 
+  // Safe Route coordinates calculation effect
+  useEffect(() => {
+    const start = LANDMARKS[routeSource];
+    const end = LANDMARKS[routeDest];
+    if (start && end) {
+      const coords = generateRoutePoints(start, end, selectedRouteOption);
+      setSelectedRouteCoords(coords);
+    }
+  }, [routeSource, routeDest, selectedRouteOption]);
+
+  const generateRoutePoints = (
+    start: { lat: number; lng: number },
+    end: { lat: number; lng: number },
+    routeType: 'A' | 'B' | 'C'
+  ) => {
+    const points: number[][] = [];
+    const steps = 8;
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      let lat = start.lat + (end.lat - start.lat) * t;
+      let lng = start.lng + (end.lng - start.lng) * t;
+      
+      if (i > 0 && i < steps) {
+        if (routeType === 'A') {
+          // Direct Line with small random offset
+          lat += Math.sin(t * Math.PI) * 0.005;
+          lng += Math.cos(t * Math.PI) * 0.005;
+        } else if (routeType === 'B') {
+          // Curving north/east to avoid congestion zones
+          lat += Math.sin(t * Math.PI) * 0.016;
+          lng += Math.cos(t * Math.PI) * 0.016;
+        } else {
+          // Curving south/west to avoid known hotspots
+          lat -= Math.sin(t * Math.PI) * 0.012;
+          lng -= Math.cos(t * Math.PI) * 0.012;
+        }
+      }
+      points.push([lat, lng]);
+    }
+    return points;
+  };
+
+  // SOS Countdown Timer effect
+  useEffect(() => {
+    let timer: any = null;
+    if (sosActive) {
+      timer = setInterval(() => {
+        setCountdownTime(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      setCountdownTime(3600); // Reset to 60 mins
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [sosActive]);
+
+  const formatCountdown = (seconds: number) => {
+    const min = Math.floor(seconds / 60);
+    const sec = seconds % 60;
+    return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+  };
+
+  const getScaledFine = (fineStr: string, state: string) => {
+    const match = fineStr.match(/\d+([,]\d+)*/);
+    if (!match) return fineStr;
+    const baseVal = parseInt(match[0].replace(/,/g, ''));
+    let multiplier = 1.0;
+    if (state === 'Tamil Nadu') multiplier = 1.2;
+    if (state === 'Maharashtra') multiplier = 1.3;
+    const scaledVal = Math.round(baseVal * multiplier);
+    const formatted = '₹' + scaledVal.toLocaleString('en-IN');
+    return fineStr.replace(match[0], formatted.replace('₹', ''));
+  };
+
   const fetchMapData = async (lat: number, lng: number) => {
     try {
       const res = await fetch(`/api/map-data?lat=${lat}&lng=${lng}`);
@@ -307,20 +1008,75 @@ export default function App() {
   };
 
   const fetchRules = async () => {
+    // Standard set of 6 expanded hackathon-grade legal violations
+    const localRules: TrafficRule[] = [
+      { 
+        id: '1', 
+        type: 'Signal Jump', 
+        fineAmount: '₹5,000', 
+        explanation: 'Disregarding red traffic signals is a major cause of broadside collisions at city intersections.', 
+        severity: 'High', 
+        characterAdvice: 'Traffic Sensei says: Red means STOP! Impatience costs lives. Wait for the green light, young motorist! 🚦', 
+        riskScore: 75 
+      },
+      { 
+        id: '2', 
+        type: 'Overspeeding', 
+        fineAmount: '₹2,000', 
+        explanation: 'Exceeding the speed limit dramatically reduces reaction time and increases stopping distance.', 
+        severity: 'High', 
+        characterAdvice: 'Traffic Sensei says: Speed limits are not suggestions! Control your speed, or gravity will control you. 🚗', 
+        riskScore: 60 
+      },
+      { 
+        id: '3', 
+        type: 'Drunk Driving', 
+        fineAmount: '₹10,000', 
+        explanation: 'Driving under the influence of alcohol severely impairs motor control, reflexes, and cognitive judgment.', 
+        severity: 'Critical', 
+        characterAdvice: 'Traffic Sensei says: Extremely dangerous! Never get behind the wheel after drinking. Call a cab. 🛑🍺', 
+        riskScore: 95 
+      },
+      { 
+        id: '4', 
+        type: 'Helmet Check', 
+        fineAmount: '₹1,000', 
+        explanation: 'Riding a two-wheeler without a certified safety helmet increases the chance of fatal traumatic brain injuries by 300%.', 
+        severity: 'Medium', 
+        characterAdvice: 'Traffic Sensei says: Protect your brain! A certified helmet is your shield of honor. Don’t ride without it. 🏍️🛡️', 
+        riskScore: 40 
+      },
+      { 
+        id: '5', 
+        type: 'Seatbelt Mandate', 
+        fineAmount: '₹1,000', 
+        explanation: 'Failure to buckle seatbelts reduces vehicle safety cell effectiveness, leading to cabin ejection in crashes.', 
+        severity: 'Medium', 
+        characterAdvice: 'Traffic Sensei says: Click it or ticket! Seatbelts keep you anchored in your seat. Fasten it before starting. 🚗🔒', 
+        riskScore: 35 
+      },
+      { 
+        id: '6', 
+        type: 'Mobile Usage', 
+        fineAmount: '₹5,000', 
+        explanation: 'Texting or taking calls while driving causes visual, cognitive, and manual distraction from the road.', 
+        severity: 'High', 
+        characterAdvice: 'Traffic Sensei says: Put the phone down! No notification is worth your life. Keep your eyes on the road. 📱❌', 
+        riskScore: 70 
+      }
+    ];
+
     try {
       const res = await fetch('/api/rules');
       const data = await res.json();
-      setRules(data);
-      if (data.length > 0) {
+      if (data && data.length >= 6) {
+        setRules(data);
         setSelectedRule(data[0]);
+      } else {
+        setRules(localRules);
+        setSelectedRule(localRules[0]);
       }
     } catch (e) {
-      // Offline fallback
-      const localRules: TrafficRule[] = [
-        { id: '1', type: 'Signal Jump', fineAmount: '₹5,000 / $100', explanation: 'Disregarding red signals causes serious intersection crashes.', severity: 'High', characterAdvice: 'Red means STOP! Wait for green, motorist!', riskScore: 75 },
-        { id: '2', type: 'Overspeeding', fineAmount: '₹2,000 / $150', explanation: 'Overspeeding reduces reaction time.', severity: 'High', characterAdvice: 'Speed limits are calculations of safety!', riskScore: 60 },
-        { id: '3', type: 'Drunk Driving', fineAmount: '₹10,000 / $500', explanation: 'Severely impairs reflexes and judgment.', severity: 'Critical', characterAdvice: 'Extremely dangerous! Take a cab home.', riskScore: 95 }
-      ];
       setRules(localRules);
       setSelectedRule(localRules[0]);
     }
@@ -499,67 +1255,119 @@ export default function App() {
       {/* ==========================================
           LEFT RESPONSIVE SIDEBAR NAVIGATION
          ========================================== */}
-      <aside className="w-full md:w-64 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 flex flex-col shrink-0">
+      <aside className="w-full md:w-64 bg-slate-900/85 backdrop-blur-md border-b md:border-b-0 md:border-r border-slate-800 flex flex-col shrink-0">
         {/* Brand Banner */}
-        <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+        <div className="p-6 border-b border-slate-800 flex flex-col space-y-3">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-gradient-to-tr from-amber-500 to-red-500 rounded-xl shadow-glow-gold">
               <ShieldAlert className="w-6 h-6 text-slate-950 font-bold" />
             </div>
             <div>
               <h1 className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-amber-400 via-rose-400 to-indigo-400 bg-clip-text text-transparent">
-                RaastaSense
+                RaastaSense AI
               </h1>
               <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold block">Anime Road Guide</span>
             </div>
           </div>
+          
+          {/* Dynamic Multilingual Selector */}
+          <div className="flex items-center space-x-2 bg-slate-950/60 border border-slate-850 rounded-xl px-2.5 py-1.5 w-full shadow-inner">
+            <Globe className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+            <select
+              value={currentLang}
+              onChange={(e) => setCurrentLang(e.target.value as any)}
+              className="bg-transparent border-none text-[10px] font-extrabold text-slate-300 focus:outline-none cursor-pointer w-full"
+            >
+              <option value="en" className="bg-slate-900 text-slate-200">English (EN)</option>
+              <option value="hi" className="bg-slate-900 text-slate-200">हिंदी (HI)</option>
+              <option value="mr" className="bg-slate-900 text-slate-200">मराठी (MR)</option>
+              <option value="ta" className="bg-slate-900 text-slate-200">தமிழ் (TA)</option>
+              <option value="te" className="bg-slate-900 text-slate-200">తెలుగు (TE)</option>
+              <option value="kn" className="bg-slate-900 text-slate-200">ಕನ್ನಡ (KN)</option>
+              <option value="gu" className="bg-slate-900 text-slate-200">ગુજરાતી (GU)</option>
+              <option value="pa" className="bg-slate-900 text-slate-200">ਪੰਜਾਬੀ (PA)</option>
+              <option value="bn" className="bg-slate-900 text-slate-200">বাংলা (BN)</option>
+            </select>
+          </div>
         </div>
 
         {/* Sidebar Nav buttons */}
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
+          {/* Tab 1: Home */}
+          <button
+            onClick={() => setActiveTab('home')}
+            className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl transition duration-150 text-xs font-bold border ${activeTab === 'home' ? 'bg-amber-500/10 text-amber-400 border-amber-500/35 shadow-sm shadow-amber-500/10' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white border-transparent'}`}
+          >
+            <Home className="w-4 h-4 shrink-0" />
+            <span>{t('home')}</span>
+          </button>
+
+          {/* Tab 2: Dashboard Hub */}
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition duration-200 font-medium ${activeTab === 'dashboard' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+            className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl transition duration-150 text-xs font-bold border ${activeTab === 'dashboard' ? 'bg-amber-500/10 text-amber-400 border-amber-500/35 shadow-sm shadow-amber-500/10' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white border-transparent'}`}
           >
-            <Compass className="w-5 h-5" />
-            <span>Dashboard Hub</span>
+            <Compass className="w-4 h-4 shrink-0" />
+            <span>{t('dashboard')}</span>
           </button>
 
+          {/* Tab 3: DriveLegal Rules */}
           <button
             onClick={() => setActiveTab('rules')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition duration-200 font-medium ${activeTab === 'rules' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+            className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl transition duration-150 text-xs font-bold border ${activeTab === 'rules' ? 'bg-amber-500/10 text-amber-400 border-amber-500/35 shadow-sm shadow-amber-500/10' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white border-transparent'}`}
           >
-            <FileText className="w-5 h-5" />
-            <span>DriveLegal Rules</span>
+            <FileText className="w-4 h-4 shrink-0" />
+            <span>{t('rules')}</span>
           </button>
 
+          {/* Tab 4: RoadWatch Report */}
           <button
             onClick={() => setActiveTab('reporter')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition duration-200 font-medium ${activeTab === 'reporter' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+            className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl transition duration-150 text-xs font-bold border ${activeTab === 'reporter' ? 'bg-amber-500/10 text-amber-400 border-amber-500/35 shadow-sm shadow-amber-500/10' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white border-transparent'}`}
           >
-            <AlertTriangle className="w-5 h-5" />
-            <span>RoadWatch Report</span>
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>{t('reporter')}</span>
           </button>
 
+          {/* Tab 5: RoadSOS Emergency */}
           <button
             onClick={() => setActiveTab('emergency')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition duration-200 font-medium ${activeTab === 'emergency' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+            className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl transition duration-150 text-xs font-bold border ${activeTab === 'emergency' ? 'bg-amber-500/10 text-amber-400 border-amber-500/35 shadow-sm shadow-amber-500/10' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white border-transparent'}`}
           >
-            <HeartHandshake className="w-5 h-5" />
-            <span>RoadSOS Emergency</span>
+            <HeartHandshake className="w-4 h-4 shrink-0" />
+            <span>{t('emergency')}</span>
           </button>
 
+          {/* Tab 6: Character AI Chat */}
           <button
             onClick={() => setActiveTab('chat')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition duration-200 font-medium ${activeTab === 'chat' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+            className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl transition duration-150 text-xs font-bold border ${activeTab === 'chat' ? 'bg-amber-500/10 text-amber-400 border-amber-500/35 shadow-sm shadow-amber-500/10' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white border-transparent'}`}
           >
-            <MessageSquare className="w-5 h-5" />
-            <span>Character AI Chat</span>
+            <MessageSquare className="w-4 h-4 shrink-0" />
+            <span>{t('chat')}</span>
+          </button>
+
+          {/* Tab 7: Analytics */}
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl transition duration-150 text-xs font-bold border ${activeTab === 'analytics' ? 'bg-amber-500/10 text-amber-400 border-amber-500/35 shadow-sm shadow-amber-500/10' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white border-transparent'}`}
+          >
+            <LineChart className="w-4 h-4 shrink-0" />
+            <span>{t('analytics')}</span>
+          </button>
+
+          {/* Tab 8: Settings */}
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl transition duration-150 text-xs font-bold border ${activeTab === 'settings' ? 'bg-amber-500/10 text-amber-400 border-amber-500/35 shadow-sm shadow-amber-500/10' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white border-transparent'}`}
+          >
+            <LifeBuoy className="w-4 h-4 shrink-0" />
+            <span>{t('settings')}</span>
           </button>
         </nav>
 
         {/* Quick System Badge info */}
-        <div className="p-4 border-t border-slate-800 text-[11px] text-slate-500 space-y-1">
+        <div className="p-4 border-t border-slate-800 text-[10px] text-slate-500 space-y-1 bg-slate-950/20">
           <div>Status: <span className="text-emerald-400 font-semibold">Production Ready</span></div>
           <div>Core logic: <span className="text-amber-400 font-semibold">100% Deterministic</span></div>
         </div>
@@ -621,6 +1429,256 @@ export default function App() {
            ========================================== */}
         <AnimatePresence mode="wait">
           
+          {/* TAB 0: HOME / HERO VIEW */}
+          {activeTab === 'home' && (
+            <motion.div
+              key="home"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-8"
+            >
+              {/* TRICOLOUR INTELLIGENCE BANNER */}
+              <div className="w-full bg-slate-950/80 border border-slate-800 rounded-3xl p-3.5 relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-3 shadow-[0_0_20px_rgba(245,158,11,0.08)] group">
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 via-transparent to-emerald-500/5 pointer-events-none" />
+                <div className="flex items-center space-x-3 relative z-10">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-gradient-to-r from-orange-500 via-white to-emerald-500"></span>
+                  </span>
+                  <span className="text-xs sm:text-sm font-black tracking-wider text-slate-100 uppercase flex items-center gap-2">
+                    {t('tricolourBanner')}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2 text-[9px] font-mono font-bold tracking-widest text-slate-500 uppercase">
+                  <span className="px-2 py-0.5 rounded bg-orange-500/10 text-orange-400">SAFFRON GLOW</span>
+                  <span className="px-2 py-0.5 rounded bg-slate-900 text-slate-300 animate-pulse">WHITE PULSE</span>
+                  <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400">GREEN WAVE</span>
+                </div>
+              </div>
+
+              {/* IMMERSIVE FUTURISTIC HERO SECTION */}
+              <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-[#0c1222] via-[#0d152c] to-[#080d19] p-8 md:p-12 shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+                <div className="absolute -top-24 -left-24 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl" />
+                <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl" />
+                
+                {/* Cybersecurity grid backdrop overlay */}
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b0b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b0b_1px,transparent_1px)] bg-[size:14px_24px] pointer-events-none" />
+
+                <div className="relative z-10 space-y-6 max-w-3xl">
+                  <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-indigo-500/10 border border-indigo-500/25 text-indigo-400 inline-block">
+                    🤖 AI Mobility Protocol Activated
+                  </span>
+                  
+                  <div className="space-y-3">
+                    <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white">
+                      {t('heroTitle')}{" "}
+                      <span className="bg-gradient-to-r from-amber-400 via-rose-400 to-indigo-400 bg-clip-text text-transparent">
+                        2.0
+                      </span>
+                    </h1>
+                    <p className="text-lg md:text-2xl font-bold text-slate-350">
+                      {t('heroSubtitle')}
+                    </p>
+                    <p className="text-sm text-slate-400 italic">
+                      "{t('heroTagline')}"
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-4 pt-2">
+                    <button
+                      onClick={() => setActiveTab('dashboard')}
+                      className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-400 hover:to-rose-400 text-slate-950 font-black text-xs uppercase tracking-widest shadow-lg shadow-amber-500/10 transition-all duration-200 transform hover:-y-0.5 cursor-pointer border-none"
+                    >
+                      {t('startJourney')}
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('analytics')}
+                      className="px-6 py-3 rounded-2xl bg-slate-900 border border-slate-800 text-slate-200 hover:text-white font-extrabold text-xs uppercase tracking-widest transition duration-150 cursor-pointer"
+                    >
+                      {t('exploreSafety')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 1. AI SAFETY OVERVIEW CARDS */}
+              <div className="space-y-3">
+                <span className="text-[10px] text-slate-500 uppercase tracking-widest font-extrabold block">1. AI Safety Diagnostics HUD</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                  
+                  {/* Card 1: Risk level */}
+                  <div className="glass-panel rounded-3xl p-5 border border-slate-850 flex items-center justify-between relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-rose-500/5 rounded-full blur-xl group-hover:bg-rose-500/10 transition" />
+                    <div className="space-y-1">
+                      <span className="text-[9px] text-slate-500 uppercase tracking-widest font-bold block">{t('riskLevel')}</span>
+                      <span className="text-2xl font-black font-mono text-rose-500 animate-pulse">OPTIMAL</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500">
+                      <Gauge className="w-4.5 h-4.5" />
+                    </div>
+                  </div>
+
+                  {/* Card 2: Zone Safety */}
+                  <div className="glass-panel rounded-3xl p-5 border border-slate-850 flex items-center justify-between relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-500/5 rounded-full blur-xl group-hover:bg-emerald-500/10 transition" />
+                    <div className="space-y-1">
+                      <span className="text-[9px] text-slate-500 uppercase tracking-widest font-bold block">{t('currentZone')}</span>
+                      <span className="text-xl font-black text-emerald-400">98% SAFE</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                      <MapPin className="w-4.5 h-4.5" />
+                    </div>
+                  </div>
+
+                  {/* Card 3: Road Condition */}
+                  <div className="glass-panel rounded-3xl p-5 border border-slate-850 flex items-center justify-between relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-amber-500/5 rounded-full blur-xl group-hover:bg-amber-500/10 transition" />
+                    <div className="space-y-1">
+                      <span className="text-[9px] text-slate-500 uppercase tracking-widest font-bold block">{t('roadCondition')}</span>
+                      <span className="text-lg font-black text-amber-400">STANDARD</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                      <Layers className="w-4.5 h-4.5" />
+                    </div>
+                  </div>
+
+                  {/* Card 4: Enforcement */}
+                  <div className="glass-panel rounded-3xl p-5 border border-slate-850 flex items-center justify-between relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-sky-500/5 rounded-full blur-xl group-hover:bg-sky-500/10 transition" />
+                    <div className="space-y-1">
+                      <span className="text-[9px] text-slate-500 uppercase tracking-widest font-bold block">{t('enforcementAlerts')}</span>
+                      <span className="text-lg font-black text-sky-400">ACTIVE</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400">
+                      <ShieldAlert className="w-4.5 h-4.5" />
+                    </div>
+                  </div>
+
+                  {/* Card 5: Weather */}
+                  <div className="glass-panel rounded-3xl p-5 border border-slate-850 flex items-center justify-between relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-500/5 rounded-full blur-xl group-hover:bg-indigo-500/10 transition" />
+                    <div className="space-y-1">
+                      <span className="text-[9px] text-slate-500 uppercase tracking-widest font-bold block">{t('weatherImpact')}</span>
+                      <span className="text-lg font-black text-indigo-400">CLEAR</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+                      <Sun className="w-4.5 h-4.5" />
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* 2. REAL-TIME AI SIMULATION & TRAFFIC COMMAND DECK */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* Simulation Panel */}
+                <div className="lg:col-span-2 glass-panel rounded-3xl p-6 border border-slate-850 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-md font-extrabold flex items-center text-slate-200">
+                      <Activity className="w-4.5 h-4.5 text-indigo-400 mr-2" />
+                      {t('simulationPanel')}
+                    </h3>
+                    <span className="px-2 py-0.5 rounded text-[8px] font-mono bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">AUTOMATIC FEED</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-1.5 p-4 rounded-2xl bg-slate-950/40 border border-slate-850">
+                      <span className="text-[9px] text-slate-500 font-bold uppercase">{t('accidentRisk')}</span>
+                      <div className="text-2xl font-black text-rose-500">14.2% <span className="text-[10px] text-slate-400 font-normal">LOW</span></div>
+                      <div className="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+                        <div className="bg-rose-500 h-full rounded-full" style={{ width: '14.2%' }}></div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 p-4 rounded-2xl bg-slate-950/40 border border-slate-850">
+                      <span className="text-[9px] text-slate-500 font-bold uppercase">{t('trafficDensity')}</span>
+                      <div className="text-2xl font-black text-amber-500">32% <span className="text-[10px] text-slate-400 font-normal">MODERATE</span></div>
+                      <div className="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+                        <div className="bg-amber-500 h-full rounded-full" style={{ width: '32%' }}></div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 p-4 rounded-2xl bg-slate-950/40 border border-slate-850">
+                      <span className="text-[9px] text-slate-500 font-bold uppercase">{t('roadHazards')}</span>
+                      <div className="text-2xl font-black text-indigo-400">02 <span className="text-[10px] text-slate-400 font-normal">AWAITING REVIEW</span></div>
+                      <div className="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+                        <div className="bg-indigo-500 h-full rounded-full" style={{ width: '15%' }}></div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 p-4 rounded-2xl bg-slate-950/40 border border-slate-850">
+                      <span className="text-[9px] text-slate-500 font-bold uppercase">{t('safetyScore')}</span>
+                      <div className="text-2xl font-black text-emerald-400">92/100 <span className="text-[10px] text-slate-400 font-normal">OPTIMAL</span></div>
+                      <div className="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+                        <div className="bg-emerald-400 h-full rounded-full" style={{ width: '92%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* AI Features Boost Cards */}
+                <div className="lg:col-span-1 glass-panel rounded-3xl p-6 border border-slate-850 space-y-4">
+                  <h3 className="text-md font-extrabold flex items-center text-slate-200">
+                    <Zap className="w-4.5 h-4.5 text-amber-400 mr-2" />
+                    AI Core Modules
+                  </h3>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-slate-950/40 border border-slate-850 rounded-2xl flex flex-col justify-between group hover:border-amber-500/25 transition">
+                      <span className="text-[10px] font-black text-slate-300">{t('aiCrashPredictor')}</span>
+                      <span className="text-[9px] text-emerald-400 font-bold mt-2">Active</span>
+                    </div>
+
+                    <div className="p-3 bg-slate-950/40 border border-slate-850 rounded-2xl flex flex-col justify-between group hover:border-amber-500/25 transition">
+                      <span className="text-[10px] font-black text-slate-300">{t('aiFatigueDetector')}</span>
+                      <span className="text-[9px] text-emerald-400 font-bold mt-2">Active</span>
+                    </div>
+
+                    <div className="p-3 bg-slate-950/40 border border-slate-850 rounded-2xl flex flex-col justify-between group hover:border-amber-500/25 transition">
+                      <span className="text-[10px] font-black text-slate-300">{t('aiRiskAnalyzer')}</span>
+                      <span className="text-[9px] text-emerald-400 font-bold mt-2">Active</span>
+                    </div>
+
+                    <div className="p-3 bg-slate-950/40 border border-slate-850 rounded-2xl flex flex-col justify-between group hover:border-amber-500/25 transition">
+                      <span className="text-[10px] font-black text-slate-300">{t('aiEmergencyAssistant')}</span>
+                      <span className="text-[9px] text-emerald-400 font-bold mt-2">Active</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* JUDGE IMPRESSION MODE ("WHY RAASTASENSE MATTERS") */}
+              <div className="glass-panel rounded-3xl p-6 border border-slate-850 bg-gradient-to-r from-slate-950 via-slate-950/80 to-[#0e1628]/40 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                    <h3 className="text-md font-extrabold text-slate-200">{t('whyMatters')}</h3>
+                  </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    {t('whyMattersDesc')}
+                  </p>
+                  
+                  <div className="grid grid-cols-2 gap-4 border-t border-slate-900 pt-4">
+                    <div>
+                      <span className="text-2xl font-black font-mono text-rose-500">{t('whyMattersStat1')}</span>
+                      <p className="text-[9px] text-slate-500 uppercase tracking-widest font-extrabold">{t('whyMattersLabel1')}</p>
+                    </div>
+                    <div>
+                      <span className="text-2xl font-black font-mono text-amber-500">{t('whyMattersStat2')}</span>
+                      <p className="text-[9px] text-slate-500 uppercase tracking-widest font-extrabold">{t('whyMattersLabel2')}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </motion.div>
+          )}
+
           {/* TAB 1: DASHBOARD VIEW */}
           {activeTab === 'dashboard' && (
             <motion.div
@@ -651,6 +1709,144 @@ export default function App() {
                     <span className="w-2 h-2 rounded-full bg-amber-400 mr-2" />
                     ADVISORY: Traffic Sensei says: Click seatbelts and wear certified helmets at all times!
                   </span>
+                </div>
+              </div>
+
+              {/* PRIORITY 2: SAFE ROUTE ENGINE Command Deck */}
+              <div className="glass-panel rounded-3xl p-6 border border-slate-800 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="p-1.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400">
+                      <Compass className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-extrabold text-base text-slate-100">Safe Route Planning Engine</h3>
+                      <p className="text-[10px] text-slate-400 uppercase tracking-widest font-mono">IIT Madras Road Safety Protocol</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase">Dynamic Solver: Operational</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  {/* Selectors Column (1/4 space) */}
+                  <div className="md:col-span-1 space-y-3 bg-slate-950/40 p-4 rounded-2xl border border-slate-850">
+                    <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Define Boundaries</span>
+                    
+                    <div className="space-y-1">
+                      <label className="text-[9.5px] text-slate-400 font-bold uppercase">Starting Terminal</label>
+                      <select
+                        value={routeSource}
+                        onChange={(e) => setRouteSource(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                      >
+                        {Object.entries(LANDMARKS).map(([key, val]) => (
+                          <option key={key} value={key}>{val.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[9.5px] text-slate-400 font-bold uppercase">Target Destination</label>
+                      <select
+                        value={routeDest}
+                        onChange={(e) => setRouteDest(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                      >
+                        {Object.entries(LANDMARKS).map(([key, val]) => (
+                          <option key={key} value={key}>{val.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Route Options Selection Row (3/4 space) */}
+                  <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    
+                    {/* Option A: Fastest */}
+                    <div
+                      onClick={() => setSelectedRouteOption('A')}
+                      className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between relative overflow-hidden group ${
+                        selectedRouteOption === 'A' 
+                          ? 'bg-rose-500/10 border-rose-500/50 shadow-glow-red text-slate-100' 
+                          : 'bg-slate-950/20 border-slate-850 hover:border-slate-700 text-slate-350'
+                      }`}
+                    >
+                      <div className="absolute top-0 right-0 w-12 h-12 bg-rose-500/5 rounded-full blur-xl pointer-events-none" />
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-black tracking-widest uppercase">Route A (Fastest)</span>
+                        <span className="px-1.5 py-0.5 text-[8px] bg-rose-500/20 text-rose-400 font-black rounded uppercase">CONGESTED</span>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xl font-black font-mono">19 mins</div>
+                        <div className="flex justify-between text-[10px] text-slate-400 border-t border-slate-850/30 pt-2">
+                          <span>Safety Index:</span>
+                          <span className="font-mono font-bold text-rose-405">72%</span>
+                        </div>
+                        <div className="flex justify-between text-[10px] text-slate-400">
+                          <span>Incident Zones:</span>
+                          <span className="font-mono text-rose-450 font-bold">4 Active</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Option B: Safest */}
+                    <div
+                      onClick={() => setSelectedRouteOption('B')}
+                      className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between relative overflow-hidden group ${
+                        selectedRouteOption === 'B' 
+                          ? 'bg-emerald-500/10 border-emerald-500/50 shadow-glow-green text-slate-100' 
+                          : 'bg-slate-950/20 border-slate-850 hover:border-slate-700 text-slate-350'
+                      }`}
+                    >
+                      <div className="absolute top-0 right-0 w-12 h-12 bg-emerald-500/5 rounded-full blur-xl pointer-events-none" />
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-black tracking-widest uppercase">Route B (Safest)</span>
+                        <span className="px-1.5 py-0.5 text-[8px] bg-emerald-500/20 text-emerald-400 font-black rounded uppercase">OPTIMAL</span>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xl font-black font-mono">24 mins</div>
+                        <div className="flex justify-between text-[10px] text-slate-400 border-t border-slate-850/30 pt-2">
+                          <span>Safety Index:</span>
+                          <span className="font-mono font-bold text-emerald-405">98%</span>
+                        </div>
+                        <div className="flex justify-between text-[10px] text-slate-400">
+                          <span>Incident Zones:</span>
+                          <span className="font-mono text-emerald-450 font-bold">0 Avoided</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Option C: Least Incident */}
+                    <div
+                      onClick={() => setSelectedRouteOption('C')}
+                      className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between relative overflow-hidden group ${
+                        selectedRouteOption === 'C' 
+                          ? 'bg-indigo-500/10 border-indigo-500/50 shadow-glow-blue text-slate-100' 
+                          : 'bg-slate-950/20 border-slate-850 hover:border-slate-700 text-slate-350'
+                      }`}
+                    >
+                      <div className="absolute top-0 right-0 w-12 h-12 bg-indigo-500/5 rounded-full blur-xl pointer-events-none" />
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-black tracking-widest uppercase">Route C (Alt Flow)</span>
+                        <span className="px-1.5 py-0.5 text-[8px] bg-indigo-500/20 text-indigo-400 font-black rounded uppercase">CAUTION</span>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xl font-black font-mono">21 mins</div>
+                        <div className="flex justify-between text-[10px] text-slate-400 border-t border-slate-850/30 pt-2">
+                          <span>Safety Index:</span>
+                          <span className="font-mono font-bold text-indigo-405">87%</span>
+                        </div>
+                        <div className="flex justify-between text-[10px] text-slate-400">
+                          <span>Incident Zones:</span>
+                          <span className="font-mono text-indigo-450 font-bold">1 Active</span>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
                 </div>
               </div>
 
@@ -772,6 +1968,7 @@ export default function App() {
                     onMapClick={handleMapClick}
                     activeLayer={mapLayer}
                     setActiveLayer={setMapLayer}
+                    selectedRoute={selectedRouteCoords}
                   />
                 </div>
 
@@ -886,15 +2083,30 @@ export default function App() {
                   <h3 className="font-bold text-lg">DriveLegal Index</h3>
                   
                   {/* Search bar */}
-                  <div className="relative">
-                    <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
-                    <input
-                      type="text"
-                      placeholder="Search violations (e.g. speed)..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-amber-500 transition text-slate-200"
-                    />
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+                      <input
+                        type="text"
+                        placeholder="Search violations (e.g. helmet)..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-amber-500 transition text-slate-200"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] text-slate-500 uppercase tracking-widest font-extrabold block">Regional Jurisdiction Filter</label>
+                      <select
+                        value={selectedState}
+                        onChange={(e) => setSelectedState(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-xs focus:outline-none focus:border-amber-500 text-slate-200 cursor-pointer"
+                      >
+                        <option value="Karnataka">Karnataka Fine Rates (Standard)</option>
+                        <option value="Tamil Nadu">Tamil Nadu Fine Rates (+20% Surcharge)</option>
+                        <option value="Maharashtra">Maharashtra Fine Rates (+30% Surcharge)</option>
+                      </select>
+                    </div>
                   </div>
 
                   {/* Filter list */}
@@ -955,7 +2167,7 @@ export default function App() {
                           Standard Penalty Fine
                         </span>
                         <span className="text-lg font-black text-amber-400">
-                          {selectedRule.fineAmount}
+                          {getScaledFine(selectedRule.fineAmount, selectedState)}
                         </span>
                       </div>
 
@@ -1029,136 +2241,300 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.2 }}
-              className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+              className="space-y-6"
             >
-              {/* Form module */}
-              <div className="lg:col-span-2">
-                <form onSubmit={handleReportSubmit} className="glass-panel rounded-3xl p-6 md:p-8 border border-slate-800 space-y-6">
-                  <h3 className="text-xl font-bold flex items-center">
-                    <AlertTriangle className="w-5 h-5 text-indigo-400 mr-2" />
-                    File RoadWatch Incident
-                  </h3>
-
-                  {reportSuccess && (
-                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-2xl flex items-center space-x-3 text-sm">
-                      <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
-                      <span>Issue report uploaded successfully! Monitored by the Road Guardian protector!</span>
-                    </div>
-                  )}
-
-                  {/* Inputs */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Incident Category</label>
-                      <select
-                        value={reportType}
-                        onChange={(e) => setReportType(e.target.value as any)}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-sm focus:outline-none focus:border-indigo-500 transition text-slate-200"
-                      >
-                        <option value="pothole">Pothole / Crater</option>
-                        <option value="broken-signal">Broken Signal Light</option>
-                        <option value="road-damage">Severe Road Damage</option>
-                        <option value="streetlight-out">Streetlights Dark Out</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Incident Landmark/Location</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Sector 4 Crossing, opposite Metro hub"
-                        value={reportLoc}
-                        onChange={(e) => setReportLoc(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-sm focus:outline-none focus:border-indigo-500 transition text-slate-200"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Detailed Description</label>
-                    <textarea
-                      placeholder="Describe the danger level, size, or damage to help patrol services respond correctly..."
-                      rows={4}
-                      value={reportDesc}
-                      onChange={(e) => setReportDesc(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-sm focus:outline-none focus:border-indigo-500 transition text-slate-200 resize-none"
-                      required
-                    />
-                  </div>
-
-                  {/* Photo upload */}
-                  <div className="space-y-2">
-                    <label className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
-                      Upload Incident Photo (Optional)
-                    </label>
-                    <div className="border-2 border-dashed border-slate-800 rounded-2xl p-6 text-center hover:border-indigo-500/40 transition relative cursor-pointer group bg-slate-950/20">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                      
-                      {reportImage ? (
-                        <div className="space-y-2 flex flex-col items-center">
-                          <img 
-                            src={reportImage} 
-                            alt="Uploaded preview" 
-                            className="w-32 h-20 object-cover rounded-xl border border-slate-700" 
-                          />
-                          <span className="text-xs text-indigo-400 font-semibold block">Photo loaded successfully!</span>
-                        </div>
-                      ) : (
-                        <div className="space-y-2 flex flex-col items-center">
-                          <FileImage className="w-8 h-8 text-slate-600 group-hover:text-indigo-400 transition" />
-                          <span className="text-xs text-slate-500 font-semibold block">
-                            Click or drag to mock upload image
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-slate-950 font-bold py-3.5 px-6 rounded-2xl shadow-glow-blue transition duration-200"
-                  >
-                    Submit Report to Road Guardian
-                  </button>
-                </form>
+              {/* Futuristic Selector Segmented Tab */}
+              <div className="flex items-center space-x-2 bg-slate-950/60 p-1.5 rounded-2xl border border-slate-800 w-max">
+                <button
+                  type="button"
+                  onClick={() => setTransparencySubTab('reporter')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition duration-150 ${
+                    transparencySubTab === 'reporter' 
+                      ? 'bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 font-extrabold shadow-glow-blue' 
+                      : 'text-slate-500 hover:text-slate-350 bg-transparent border-none cursor-pointer'
+                  }`}
+                >
+                  Incident Watch Center
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTransparencySubTab('transparency')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition duration-150 ${
+                    transparencySubTab === 'transparency' 
+                      ? 'bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 font-extrabold shadow-glow-blue' 
+                      : 'text-slate-500 hover:text-slate-350 bg-transparent border-none cursor-pointer'
+                  }`}
+                >
+                  Transparency & Budget Audit
+                </button>
               </div>
 
-              {/* Character widget */}
-              <div className="lg:col-span-1 space-y-6">
-                <div className="glass-panel rounded-3xl p-6 border border-slate-800 text-center space-y-4">
-                  <div className="w-20 h-20 mx-auto rounded-full bg-sky-500/5 flex items-center justify-center border border-sky-500/20">
-                    <RoadGuardianSVG />
+              {transparencySubTab === 'reporter' ? (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Form module */}
+                  <div className="lg:col-span-2">
+                    <form onSubmit={handleReportSubmit} className="glass-panel rounded-3xl p-6 md:p-8 border border-slate-800 space-y-6">
+                      <h3 className="text-xl font-bold flex items-center">
+                        <AlertTriangle className="w-5 h-5 text-indigo-400 mr-2" />
+                        File RoadWatch Incident
+                      </h3>
+
+                      {reportSuccess && (
+                        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-2xl flex items-center space-x-3 text-sm">
+                          <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+                          <span>Issue report uploaded successfully! Monitored by the Road Guardian protector!</span>
+                        </div>
+                      )}
+
+                      {/* Inputs */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Incident Category</label>
+                          <select
+                            value={reportType}
+                            onChange={(e) => setReportType(e.target.value as any)}
+                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-sm focus:outline-none focus:border-indigo-500 transition text-slate-200"
+                          >
+                            <option value="pothole">Pothole / Crater</option>
+                            <option value="broken-signal">Broken Signal Light</option>
+                            <option value="road-damage">Severe Road Damage</option>
+                            <option value="streetlight-out">Streetlights Dark Out</option>
+                          </select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Incident Landmark/Location</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Sector 4 Crossing, opposite Metro hub"
+                            value={reportLoc}
+                            onChange={(e) => setReportLoc(e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-sm focus:outline-none focus:border-indigo-500 transition text-slate-200"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Detailed Description</label>
+                        <textarea
+                          placeholder="Describe the danger level, size, or damage to help patrol services respond correctly..."
+                          rows={4}
+                          value={reportDesc}
+                          onChange={(e) => setReportDesc(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-sm focus:outline-none focus:border-indigo-500 transition text-slate-200 resize-none"
+                          required
+                        />
+                      </div>
+
+                      {/* Photo upload */}
+                      <div className="space-y-2">
+                        <label className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
+                          Upload Incident Photo (Optional)
+                        </label>
+                        <div className="border-2 border-dashed border-slate-800 rounded-2xl p-6 text-center hover:border-indigo-500/40 transition relative cursor-pointer group bg-slate-950/20">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          />
+                          
+                          {reportImage ? (
+                            <div className="space-y-2 flex flex-col items-center">
+                              <img 
+                                src={reportImage} 
+                                alt="Uploaded preview" 
+                                className="w-32 h-20 object-cover rounded-xl border border-slate-700" 
+                              />
+                              <span className="text-xs text-indigo-400 font-semibold block">Photo loaded successfully!</span>
+                            </div>
+                          ) : (
+                            <div className="space-y-2 flex flex-col items-center">
+                              <FileImage className="w-8 h-8 text-slate-600 group-hover:text-indigo-400 transition" />
+                              <span className="text-xs text-slate-500 font-semibold block">
+                                Click or drag to mock upload image
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-slate-950 font-bold py-3.5 px-6 rounded-2xl shadow-glow-blue transition duration-200 border-none cursor-pointer"
+                      >
+                        Submit Report to Road Guardian
+                      </button>
+                    </form>
                   </div>
-                  <h4 className="font-extrabold text-sm text-slate-200">Road Guardian Shield</h4>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    "I actively crosscheck reports to direct public works and traffic authorities instantly. Your report is our sword against road failures!"
-                  </p>
-                  
-                  <div className="pt-4 border-t border-slate-800 text-left space-y-3">
-                    <h5 className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Mock Authorities Engaged</h5>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-xs text-slate-300">
-                        <span>Potholes:</span>
-                        <span className="text-indigo-400 font-medium">Public Works</span>
+
+                  {/* Character widget */}
+                  <div className="lg:col-span-1 space-y-6">
+                    <div className="glass-panel rounded-3xl p-6 border border-slate-800 text-center space-y-4">
+                      <div className="w-20 h-20 mx-auto rounded-full bg-sky-500/5 flex items-center justify-center border border-sky-500/20">
+                        <RoadGuardianSVG />
                       </div>
-                      <div className="flex justify-between text-xs text-slate-300">
-                        <span>Signals:</span>
-                        <span className="text-indigo-400 font-medium">Traffic Police</span>
-                      </div>
-                      <div className="flex justify-between text-xs text-slate-300">
-                        <span>Lights:</span>
-                        <span className="text-indigo-400 font-medium">Electric Board</span>
+                      <h4 className="font-extrabold text-sm text-slate-200">Road Guardian Shield</h4>
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        "I actively crosscheck reports to direct public works and traffic authorities instantly. Your report is our sword against road failures!"
+                      </p>
+                      
+                      <div className="pt-4 border-t border-slate-800 text-left space-y-3">
+                        <h5 className="text-[10px] text-slate-550 font-bold uppercase tracking-wider">Mock Authorities Engaged</h5>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs text-slate-300">
+                            <span>Potholes:</span>
+                            <span className="text-indigo-400 font-medium">Public Works</span>
+                          </div>
+                          <div className="flex justify-between text-xs text-slate-300">
+                            <span>Signals:</span>
+                            <span className="text-indigo-400 font-medium">Traffic Police</span>
+                          </div>
+                          <div className="flex justify-between text-xs text-slate-300">
+                            <span>Lights:</span>
+                            <span className="text-indigo-400 font-medium">Electric Board</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Left Complaints List & Summary Stats */}
+                  <div className="lg:col-span-2 space-y-6">
+                    {/* Summary Row */}
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="glass-panel p-4 rounded-2xl border border-slate-850 text-center">
+                        <span className="text-[9px] text-slate-500 uppercase tracking-widest font-extrabold block">Total Watch Cases</span>
+                        <span className="text-xl font-mono font-black text-slate-100">426</span>
+                      </div>
+                      <div className="glass-panel p-4 rounded-2xl border border-slate-850 text-center">
+                        <span className="text-[9px] text-slate-500 uppercase tracking-widest font-extrabold block">Restored & Patched</span>
+                        <span className="text-xl font-mono font-black text-emerald-400">318</span>
+                      </div>
+                      <div className="glass-panel p-4 rounded-2xl border border-slate-850 text-center">
+                        <span className="text-[9px] text-slate-500 uppercase tracking-widest font-extrabold block">Audit Fund Spent</span>
+                        <span className="text-xl font-mono font-black text-amber-400">₹48.6L</span>
+                      </div>
+                    </div>
+
+                    {/* Table Container */}
+                    <div className="glass-panel rounded-3xl p-6 border border-slate-800 space-y-4">
+                      <h3 className="text-base font-black flex items-center">
+                        <Layers className="w-4 h-4 text-indigo-400 mr-2" />
+                        Citizen Maintenance & Budget Log
+                      </h3>
+                      
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-xs">
+                          <thead>
+                            <tr className="border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[9px]">
+                              <th className="pb-3 pl-2">Case ID</th>
+                              <th className="pb-3">Category</th>
+                              <th className="pb-3">Authority</th>
+                              <th className="pb-3">Budget Status</th>
+                              <th className="pb-3 pr-2">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                            {transparencyData.map((report) => (
+                              <tr 
+                                key={report.id}
+                                className="hover:bg-slate-950/45 transition-colors duration-150"
+                              >
+                                <td className="py-4 pl-2 font-mono font-bold text-indigo-400">{report.id}</td>
+                                <td className="py-4 font-semibold text-slate-200">{report.category}</td>
+                                <td className="py-4 text-slate-400">{report.authority.split(' (')[0]}</td>
+                                <td className="py-4">
+                                  <div className="flex flex-col">
+                                    <span className="font-mono text-amber-400 font-bold">{report.budgetAllocated}</span>
+                                    <span className="text-[9px] text-slate-500">Spent: {report.budgetSpent}</span>
+                                  </div>
+                                </td>
+                                <td className="py-4 pr-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedTransparencyReport(report)}
+                                    className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-550 hover:text-slate-950 rounded-lg text-[10px] font-bold text-indigo-400 transition cursor-pointer"
+                                  >
+                                    Inspect Log
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Detail Audits & Historical Stepper */}
+                  <div className="lg:col-span-1">
+                    {selectedTransparencyReport ? (
+                      <div className="glass-panel rounded-3xl p-6 border border-slate-800 space-y-6 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl" />
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-[9px] font-mono text-indigo-400 font-extrabold tracking-widest uppercase">AUDIT FILE</span>
+                            <span className={`px-2 py-0.5 rounded text-[8px] font-extrabold uppercase ${
+                              selectedTransparencyReport.status === 'Resolved' ? 'bg-emerald-500/10 text-emerald-450 border border-emerald-500/20' :
+                              selectedTransparencyReport.status === 'In Progress' ? 'bg-amber-500/10 text-amber-450 border border-amber-500/20' :
+                              'bg-rose-500/10 text-rose-455 border border-rose-500/20'
+                            }`}>
+                              {selectedTransparencyReport.status}
+                            </span>
+                          </div>
+                          <h4 className="font-extrabold text-slate-100 text-sm leading-snug">{selectedTransparencyReport.category}</h4>
+                          <span className="text-[10px] text-slate-400 font-mono block mt-1">{selectedTransparencyReport.landmark}</span>
+                        </div>
+
+                        {/* Funding Progress Bar */}
+                        <div className="space-y-1.5 border-t border-b border-slate-800/80 py-3.5">
+                          <div className="flex justify-between text-[10px] font-bold font-mono">
+                            <span className="text-slate-400">Budget Spent / Allocated</span>
+                            <span className="text-amber-400">
+                              {selectedTransparencyReport.budgetSpent} / {selectedTransparencyReport.budgetAllocated}
+                            </span>
+                          </div>
+                          <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden">
+                            <div 
+                              className="bg-amber-500 h-1.5 rounded-full" 
+                              style={{ 
+                                width: `${Math.min(100, (parseInt(selectedTransparencyReport.budgetSpent.replace(/[^0-9]/g, '')) / parseInt(selectedTransparencyReport.budgetAllocated.replace(/[^0-9]/g, ''))) * 100 || 0)}%` 
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Stepper Timeline */}
+                        <div className="space-y-4">
+                          <span className="text-[10px] text-slate-500 uppercase tracking-wider font-extrabold block">Maintenance Progress Timeline</span>
+                          <div className="space-y-4 border-l border-slate-800 pl-4 ml-1 relative">
+                            {selectedTransparencyReport.history.map((hist, idx) => (
+                              <div key={idx} className="relative">
+                                {/* Dot marker */}
+                                <div className="absolute left-[-20.5px] top-1.5 w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-glow-blue border border-slate-950 animate-pulse" />
+                                <span className="text-[10.5px] text-slate-300 block leading-relaxed">{hist}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="p-3 bg-slate-950 border border-slate-850 rounded-2xl text-[10px] flex items-center justify-between">
+                          <span className="text-slate-450">Target Restoration Date:</span>
+                          <span className="font-mono text-slate-200 font-bold">{selectedTransparencyReport.expectedDate}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="glass-panel rounded-3xl p-6 border border-slate-800 text-center py-12 text-slate-500">
+                        Click "Inspect Log" on any complaints record to inspect active budget tracking and maintenance progression logs.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -1190,6 +2566,13 @@ export default function App() {
                       <p className="text-xs text-slate-400 leading-relaxed">
                         Triggering the SOS beacon logs coordinates immediately and alerts nearby dispatch zones. Stay calm, and follow first aid guides.
                       </p>
+
+                      {sosActive && (
+                        <div className="flex flex-col items-center bg-rose-950/30 border border-rose-500/20 p-4 rounded-2xl space-y-1.5 animate-pulse">
+                          <span className="text-[10px] text-rose-400 font-extrabold uppercase tracking-widest font-mono">Golden Hour Countdown</span>
+                          <span className="text-3xl font-black font-mono text-rose-500">{formatCountdown(countdownTime)}</span>
+                        </div>
+                      )}
 
                       <button
                         onClick={handleSOS}
@@ -1440,12 +2823,203 @@ export default function App() {
                       <Send className="w-4 h-4" />
                     </button>
                   </form>
-
                 </div>
               </div>
             </motion.div>
           )}
 
+          {/* TAB 6: SAFETY ANALYTICS */}
+          {activeTab === 'analytics' && (
+            <motion.div
+              key="analytics"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-8"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-xl font-extrabold flex items-center text-slate-100">
+                    <LineChart className="w-5 h-5 text-indigo-400 mr-2" />
+                    {t('observabilityTitle')}
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">{t('observabilitySub')}</p>
+                </div>
+                <div className="flex items-center space-x-2 text-xs font-mono bg-slate-950/60 p-2 border border-slate-850 rounded-2xl">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping animate-pulse" />
+                  <span className="text-slate-300 font-extrabold">LIVE TELEMETRY STREAMING</span>
+                </div>
+              </div>
+
+              {/* Grid 1: Analytics counters */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="glass-panel p-5 rounded-3xl border border-slate-850">
+                  <span className="text-[10px] text-slate-500 uppercase tracking-widest font-extrabold block">{t('systemUptime')}</span>
+                  <span className="text-2xl font-mono font-black text-slate-100 mt-1 block">99.998%</span>
+                </div>
+                <div className="glass-panel p-5 rounded-3xl border border-slate-850">
+                  <span className="text-[10px] text-slate-500 uppercase tracking-widest font-extrabold block">{t('activeNodes')}</span>
+                  <span className="text-2xl font-mono font-black text-indigo-400 mt-1 block">2,410</span>
+                </div>
+                <div className="glass-panel p-5 rounded-3xl border border-slate-850">
+                  <span className="text-[10px] text-slate-500 uppercase tracking-widest font-extrabold block">{t('routeRequests')}</span>
+                  <span className="text-2xl font-mono font-black text-amber-400 mt-1 block">18,426</span>
+                </div>
+                <div className="glass-panel p-5 rounded-3xl border border-slate-850">
+                  <span className="text-[10px] text-slate-500 uppercase tracking-widest font-extrabold block">{t('emergencyRequests')}</span>
+                  <span className="text-2xl font-mono font-black text-rose-500 mt-1 block">42</span>
+                </div>
+              </div>
+
+              {/* Neon SVG chart container */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* SVG Line chart */}
+                <div className="glass-panel rounded-3xl p-6 border border-slate-850 space-y-4">
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Safe Route vs Congested Routes Trend (Last 7 Days)</h4>
+                  <div className="h-56 w-full flex items-center justify-center relative bg-slate-950/20 rounded-2xl border border-slate-900 p-2">
+                    <svg viewBox="0 0 500 200" className="w-full h-full">
+                      <defs>
+                        <linearGradient id="neonCyan" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.4" />
+                          <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.0" />
+                        </linearGradient>
+                        <linearGradient id="neonAmber" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.4" />
+                          <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.0" />
+                        </linearGradient>
+                      </defs>
+                      
+                      <line x1="0" y1="40" x2="500" y2="40" stroke="#1e293b" strokeWidth="1" strokeDasharray="5,5" />
+                      <line x1="0" y1="90" x2="500" y2="90" stroke="#1e293b" strokeWidth="1" strokeDasharray="5,5" />
+                      <line x1="0" y1="140" x2="500" y2="140" stroke="#1e293b" strokeWidth="1" strokeDasharray="5,5" />
+                      
+                      <path d="M 0,200 L 0,140 Q 80,60 160,110 T 320,50 Q 400,90 500,30 L 500,200 Z" fill="url(#neonCyan)" />
+                      <path d="M 0,200 L 0,180 Q 80,140 160,160 T 320,130 Q 400,110 500,80 L 500,200 Z" fill="url(#neonAmber)" />
+                      
+                      <path d="M 0,140 Q 80,60 160,110 T 320,50 Q 400,90 500,30" fill="none" stroke="#38bdf8" strokeWidth="3.5" />
+                      <path d="M 0,180 Q 80,140 160,160 T 320,130 Q 400,110 500,80" fill="none" stroke="#f59e0b" strokeWidth="3" />
+                      
+                      <circle cx="160" cy="110" r="5" fill="#38bdf8" stroke="#080c16" strokeWidth="1.5" />
+                      <circle cx="320" cy="50" r="5" fill="#38bdf8" stroke="#080c16" strokeWidth="1.5" />
+                      <circle cx="320" cy="130" r="5" fill="#f59e0b" stroke="#080c16" strokeWidth="1.5" />
+                    </svg>
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                    <span>MON</span>
+                    <span>TUE</span>
+                    <span>WED</span>
+                    <span>THU</span>
+                    <span>FRI</span>
+                    <span>SAT</span>
+                    <span>SUN</span>
+                  </div>
+                </div>
+
+                {/* SVG Bar Chart */}
+                <div className="glass-panel rounded-3xl p-6 border border-slate-850 space-y-4">
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Active Incident Watch Center Resolution Times (Hours)</h4>
+                  <div className="h-56 w-full flex items-end justify-between px-4 pb-2 pt-6 relative bg-slate-950/20 rounded-2xl border border-slate-900">
+                    <div className="absolute top-4 left-4 text-[8px] text-slate-600 font-mono">24 Hours</div>
+                    <div className="absolute top-28 left-4 text-[8px] text-slate-650 font-mono">12 Hours</div>
+                    <div className="absolute bottom-6 left-4 text-[8px] text-slate-650 font-mono">0 Hours</div>
+                    
+                    <div className="flex flex-col items-center space-y-2 w-12">
+                      <div className="w-4 bg-gradient-to-t from-indigo-500/20 to-indigo-400 h-28 rounded-t-lg relative group">
+                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-slate-900 px-1.5 py-0.5 rounded text-[8px] font-mono border border-slate-800 text-indigo-400 font-bold opacity-0 group-hover:opacity-100 transition">12h</div>
+                      </div>
+                      <span className="text-[9px] text-slate-500 font-mono">Pothole</span>
+                    </div>
+
+                    <div className="flex flex-col items-center space-y-2 w-12">
+                      <div className="w-4 bg-gradient-to-t from-indigo-500/20 to-indigo-400 h-36 rounded-t-lg relative group">
+                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-slate-900 px-1.5 py-0.5 rounded text-[8px] font-mono border border-slate-800 text-indigo-400 font-bold opacity-0 group-hover:opacity-100 transition">18h</div>
+                      </div>
+                      <span className="text-[9px] text-slate-500 font-mono">Signal</span>
+                    </div>
+
+                    <div className="flex flex-col items-center space-y-2 w-12">
+                      <div className="w-4 bg-gradient-to-t from-indigo-500/20 to-indigo-400 h-16 rounded-t-lg relative group">
+                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-slate-900 px-1.5 py-0.5 rounded text-[8px] font-mono border border-slate-800 text-indigo-400 font-bold opacity-0 group-hover:opacity-100 transition">6h</div>
+                      </div>
+                      <span className="text-[9px] text-slate-500 font-mono">Damage</span>
+                    </div>
+
+                    <div className="flex flex-col items-center space-y-2 w-12">
+                      <div className="w-4 bg-gradient-to-t from-indigo-500/20 to-indigo-400 h-44 rounded-t-lg relative group">
+                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-slate-900 px-1.5 py-0.5 rounded text-[8px] font-mono border border-slate-800 text-indigo-400 font-bold opacity-0 group-hover:opacity-100 transition">22h</div>
+                      </div>
+                      <span className="text-[9px] text-slate-500 font-mono">Lights</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </motion.div>
+          )}
+
+          {/* TAB 7: SYSTEM SETTINGS / ENVIRONMENT DIAGNOSTICS */}
+          {activeTab === 'settings' && (
+            <motion.div
+              key="settings"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-8"
+            >
+              <div>
+                <h3 className="text-xl font-extrabold flex items-center text-slate-100">
+                  <LifeBuoy className="w-5 h-5 text-amber-400 mr-2" />
+                  RaastaSense AI Infrastructure Console
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">Simulated telemetry databases, logger endpoints, and environment status diagnostic tools</p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left pane: Diagnostics logs */}
+                <div className="lg:col-span-2 glass-panel rounded-3xl p-6 border border-slate-850 space-y-4">
+                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Simulated Telemetry Logger Console</h4>
+                  <div className="bg-slate-950/80 rounded-2xl p-4 border border-slate-900 h-64 overflow-y-auto font-mono text-[10.5px] leading-relaxed text-slate-400 space-y-2 select-text shadow-inner">
+                    <div>[2026-05-31 18:16:32] <span className="text-indigo-400">[INFO]</span> Cloud Logger telemetry streaming pipeline connected to simulated endpoint.</div>
+                    <div>[2026-05-31 18:16:33] <span className="text-indigo-400">[INFO]</span> Firestore simulated client initialized. Mock collections storage parsed: 426 files.</div>
+                    <div>[2026-05-31 18:16:35] <span className="text-amber-500">[WARN]</span> Gemini API key client status: <span className="text-amber-400">OFFLINE/SIMULATION</span> - serving high-fidelity dynamic response templates.</div>
+                    <div>[2026-05-31 18:16:38] <span className="text-indigo-400">[INFO]</span> Golden Hour dispatch loop loaded successfully. Golden Hour parameter scaling complete.</div>
+                    <div>[2026-05-31 18:16:41] <span className="text-indigo-400">[INFO]</span> Telemetry audit tracking stream active. Safe Route planning metrics pushed.</div>
+                  </div>
+                </div>
+
+                {/* Right pane: Config details */}
+                <div className="lg:col-span-1 space-y-6">
+                  <div className="glass-panel rounded-3xl p-6 border border-slate-850 space-y-4">
+                    <h4 className="text-xs font-black text-slate-450 uppercase tracking-widest">Environment & Deployment Diagnostics</h4>
+                    
+                    <div className="space-y-4 text-xs">
+                      <div className="flex items-center justify-between border-b border-slate-900 pb-2.5">
+                        <span className="text-slate-500 font-semibold">Gemini Client status:</span>
+                        <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 rounded-md font-mono text-[10px]">SIMULATOR</span>
+                      </div>
+
+                      <div className="flex items-center justify-between border-b border-slate-900 pb-2.5">
+                        <span className="text-slate-500 font-semibold">Vercel Deployment:</span>
+                        <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-md font-mono text-[10px]">VERCEL READY</span>
+                      </div>
+
+                      <div className="flex items-center justify-between border-b border-slate-900 pb-2.5">
+                        <span className="text-slate-500 font-semibold">NoSQL Persistence:</span>
+                        <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 rounded-md font-mono text-[10px]">LOCALSTORAGE</span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500 font-semibold">IIT Madras Hackathon:</span>
+                        <span className="px-2 py-0.5 bg-orange-500/10 text-orange-400 rounded-md font-mono text-[10px] font-black uppercase">FINALIST</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
 
       </main>
