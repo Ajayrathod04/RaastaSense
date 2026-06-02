@@ -1,14 +1,18 @@
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { AlertCircle, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { AlertCircle, AlertTriangle, ShieldCheck } from "lucide-react";
 
 interface RiskSpeedometerProps {
   score: number; // 0 to 100
-  classification: 'Safe' | 'Risky' | 'Dangerous';
+  classification: "Safe" | "Warning" | "Critical";
   recommendations: string[];
 }
 
-export default function RiskSpeedometer({ score, classification, recommendations }: RiskSpeedometerProps) {
+export default function RiskSpeedometer({
+  score,
+  classification,
+  recommendations,
+}: RiskSpeedometerProps) {
   const [animatedScore, setAnimatedScore] = useState(0);
 
   // Smooth numerical count-up animation
@@ -23,11 +27,11 @@ export default function RiskSpeedometer({ score, classification, recommendations
     const animate = (now: number) => {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      
+
       // Ease-out quad formula
       const ease = progress * (2 - progress);
       const current = Math.round(start + (end - start) * ease);
-      
+
       setAnimatedScore(current);
 
       if (progress < 1) {
@@ -41,34 +45,40 @@ export default function RiskSpeedometer({ score, classification, recommendations
   // Map 0-100 score to degrees for speedometer needle (-90deg for 0, +90deg for 100)
   const minAngle = -90;
   const maxAngle = 90;
-  const needleRotation = minAngle + (animatedScore / 100) * (maxAngle - minAngle);
+  const needleRotation =
+    minAngle + (animatedScore / 100) * (maxAngle - minAngle);
 
   // Define colors based on severity
   const getThemeColors = () => {
     switch (classification) {
-      case 'Dangerous':
+      case "Critical":
         return {
-          glowClass: 'shadow-glow-red border-red-500/30 text-rose-450 bg-rose-500/10',
-          textClass: 'text-rose-500',
-          borderClass: 'border-rose-500/30',
-          gaugeGradient: 'url(#redGlow)',
-          icon: <AlertCircle className="w-5 h-5 text-rose-500 animate-bounce" />
+          glowClass:
+            "shadow-glow-red border-red-500/30 text-rose-450 bg-rose-500/10",
+          textClass: "text-rose-500",
+          borderClass: "border-rose-500/30",
+          gaugeGradient: "url(#redGlow)",
+          icon: (
+            <AlertCircle className="w-5 h-5 text-rose-500 animate-bounce" />
+          ),
         };
-      case 'Risky':
+      case "Warning":
         return {
-          glowClass: 'shadow-glow-gold border-amber-500/30 text-amber-400 bg-amber-500/10',
-          textClass: 'text-amber-400',
-          borderClass: 'border-amber-500/30',
-          gaugeGradient: 'url(#goldGlow)',
-          icon: <AlertTriangle className="w-5 h-5 text-amber-400" />
+          glowClass:
+            "shadow-glow-gold border-amber-500/30 text-amber-400 bg-amber-500/10",
+          textClass: "text-amber-400",
+          borderClass: "border-amber-500/30",
+          gaugeGradient: "url(#goldGlow)",
+          icon: <AlertTriangle className="w-5 h-5 text-amber-400" />,
         };
       default:
         return {
-          glowClass: 'shadow-glow-green border-emerald-500/30 text-emerald-400 bg-emerald-500/10',
-          textClass: 'text-emerald-400',
-          borderClass: 'border-emerald-500/30',
-          gaugeGradient: 'url(#greenGlow)',
-          icon: <ShieldCheck className="w-5 h-5 text-emerald-400" />
+          glowClass:
+            "shadow-glow-green border-emerald-500/30 text-emerald-400 bg-emerald-500/10",
+          textClass: "text-emerald-400",
+          borderClass: "border-emerald-500/30",
+          gaugeGradient: "url(#greenGlow)",
+          icon: <ShieldCheck className="w-5 h-5 text-emerald-400" />,
         };
     }
   };
@@ -86,7 +96,9 @@ export default function RiskSpeedometer({ score, classification, recommendations
           <span className="w-2 h-2 rounded-full bg-indigo-500 mr-2 animate-ping" />
           Smart Risk Engine
         </h3>
-        <span className={`px-3 py-1 text-[10px] font-extrabold rounded-lg border uppercase tracking-wider font-mono ${theme.glowClass}`}>
+        <span
+          className={`px-3 py-1 text-[10px] font-extrabold rounded-lg border uppercase tracking-wider font-mono ${theme.glowClass}`}
+        >
           {classification}
         </span>
       </div>
@@ -100,12 +112,12 @@ export default function RiskSpeedometer({ score, classification, recommendations
               <stop offset="0%" stopColor="#1e293b" />
               <stop offset="100%" stopColor="#1e293b" />
             </linearGradient>
-            
+
             <linearGradient id="greenGlow" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#10b981" />
               <stop offset="100%" stopColor="#34d399" />
             </linearGradient>
-            
+
             <linearGradient id="goldGlow" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#f59e0b" />
               <stop offset="100%" stopColor="#fbbf24" />
@@ -117,8 +129,20 @@ export default function RiskSpeedometer({ score, classification, recommendations
             </linearGradient>
 
             {/* Neon Glow Filters */}
-            <filter id="neonShadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="0" stdDeviation="2" floodColor="#38bdf8" floodOpacity="0.6" />
+            <filter
+              id="neonShadow"
+              x="-20%"
+              y="-20%"
+              width="140%"
+              height="140%"
+            >
+              <feDropShadow
+                dx="0"
+                dy="0"
+                stdDeviation="2"
+                floodColor="#38bdf8"
+                floodOpacity="0.6"
+              />
             </filter>
           </defs>
 
@@ -167,18 +191,25 @@ export default function RiskSpeedometer({ score, classification, recommendations
           />
 
           {/* Dial Center Bolt */}
-          <circle cx="50" cy="50" r="4" fill="#0f172a" stroke="#475569" strokeWidth="1.5" />
+          <circle
+            cx="50"
+            cy="50"
+            r="4"
+            fill="#0f172a"
+            stroke="#475569"
+            strokeWidth="1.5"
+          />
 
           {/* Animated Needle pointer */}
-          <motion.g 
+          <motion.g
             animate={{ rotate: needleRotation }}
-            transition={{ type: 'spring', stiffness: 60, damping: 15 }}
-            style={{ originX: '50px', originY: '50px' }}
+            transition={{ type: "spring", stiffness: 60, damping: 15 }}
+            style={{ originX: "50px", originY: "50px" }}
           >
             {/* The sharp triangular cyber pointer needle */}
-            <polygon 
-              points="48,50 50,14 52,50" 
-              fill={score > 70 ? '#f43f5e' : score > 40 ? '#f59e0b' : '#38bdf8'}
+            <polygon
+              points="48,50 50,14 52,50"
+              fill={score > 70 ? "#f43f5e" : score > 40 ? "#f59e0b" : "#38bdf8"}
               className="drop-shadow-[0_0_5px_rgba(56,189,248,0.8)]"
             />
             {/* High-tech center accent cap */}
@@ -191,7 +222,9 @@ export default function RiskSpeedometer({ score, classification, recommendations
           <span className="text-4xl font-black font-mono tracking-tight bg-gradient-to-b from-white to-slate-350 bg-clip-text text-transparent drop-shadow-sm">
             {animatedScore}
           </span>
-          <span className="text-[9px] text-slate-500 font-extrabold uppercase tracking-widest mt-[-2px]">Risk Factor</span>
+          <span className="text-[9px] text-slate-500 font-extrabold uppercase tracking-widest mt-[-2px]">
+            Risk Factor
+          </span>
         </div>
       </div>
 
@@ -203,7 +236,10 @@ export default function RiskSpeedometer({ score, classification, recommendations
         </span>
         <div className="space-y-1.5 max-h-24 overflow-y-auto pr-1">
           {recommendations.map((rec, idx) => (
-            <p key={idx} className="text-[11px] text-slate-350 leading-relaxed font-medium">
+            <p
+              key={idx}
+              className="text-[11px] text-slate-350 leading-relaxed font-medium"
+            >
               • {rec}
             </p>
           ))}

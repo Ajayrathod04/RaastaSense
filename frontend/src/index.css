@@ -48,9 +48,15 @@
 
 /* Keyframe Animations */
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 .animate-float {
@@ -58,8 +64,13 @@
 }
 
 @keyframes pulse-glow {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.8; }
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.8;
+  }
 }
 
 .animate-pulse-glow {
@@ -68,8 +79,12 @@
 
 /* Cyberpunk scrolling marquee animation */
 @keyframes marquee {
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
 }
 
 .animate-marquee {
