@@ -610,132 +610,318 @@ app.get('/api/reports', (req: Request, res: Response) => {
 
 // ==========================================
 // 4. CHATBOT AND ANIME CHARACTER ENGINE
-// ==========================================
 app.post('/api/chat', async (req: Request, res: Response) => {
-  const { message, history } = req.body;
+  const { message, isOffline, history } = req.body;
 
   if (!message) {
     return res.status(400).json({ error: 'Message payload is missing.' });
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
-
-  // Let's decide which character is best suited to answer based on keywords
-  let recommendedCharacter = 'Traffic Sensei';
-  let characterAvatarState = 'happy';
   const msgLower = message.toLowerCase();
+  let fallbackText = '';
 
-  if (
-    msgLower.includes('emergency') || 
-    msgLower.includes('hospital') || 
-    msgLower.includes('police') || 
-    msgLower.includes('sos') || 
-    msgLower.includes('accident') || 
-    msgLower.includes('help') ||
-    msgLower.includes('first aid') ||
-    msgLower.includes('cpr') ||
-    msgLower.includes('breathing')
-  ) {
-    recommendedCharacter = 'Rescue Spirit';
-  } else if (
-    msgLower.includes('report') || 
-    msgLower.includes('road') || 
-    msgLower.includes('pothole') || 
-    msgLower.includes('signal') || 
-    msgLower.includes('damage') || 
-    msgLower.includes('broken') ||
-    msgLower.includes('streetlight')
-  ) {
-    recommendedCharacter = 'Road Guardian';
-  }
-
-  // Determine avatar expression depending on message tone
-  if (msgLower.includes('crash') || msgLower.includes('danger') || msgLower.includes('hurt') || msgLower.includes('critical')) {
-    characterAvatarState = 'alert';
-  } else if (msgLower.includes('sorry') || msgLower.includes('fine') || msgLower.includes('broke') || msgLower.includes('bad')) {
-    characterAvatarState = 'sad';
-  } else if (msgLower.includes('thank') || msgLower.includes('awesome') || msgLower.includes('good') || msgLower.includes('great')) {
-    characterAvatarState = 'happy';
+  // 1. Core Deterministic safety rules engine answers for offline/resilience
+  if (msgLower.includes('helmet')) {
+    fallbackText = 'Raasta AI Guardian: Under Section 129 of the Motor Vehicles Act, helmets are legally mandatory across all Indian states. The fine for riding without a helmet is ₹1,000 and can include a 3-month license suspension. Always secure your strap! 🏍️🚦';
+  } else if (msgLower.includes('fine') || msgLower.includes('penalty')) {
+    fallbackText = 'Raasta AI Guardian: Standard statutory penalties in India: Overspeeding: ₹2,000 (LMV); Drunk Driving: ₹10,000 and/or up to 6 months jail; Jump Signal: ₹5,000; Mobile Phone use: ₹5,000; No seatbelt: ₹1,000. Fines double for repeat violations. ⚖️🛑';
+  } else if (msgLower.includes('hospital') || msgLower.includes('trauma') || msgLower.includes('ambulance')) {
+    fallbackText = 'Raasta AI Guardian: Emergency Action: Immediate nearest resources: 1. City General Hospital & Trauma Care (1.2 km, Dial 102); 2. Metro Accident & Critical Ward (3.4 km, Dial 102); 3. Raasta Rescue Mobile Unit (Immediate dispatch). Keep calm, help is on the way! 🚑🏥';
+  } else if (msgLower.includes('pothole') || msgLower.includes('report') || msgLower.includes('damaged signal')) {
+    fallbackText = 'Raasta AI Guardian: To file a report, select the RoadWatch AI tab, pick the category, specify coordinates or lock current location, write details, and click Submit. Our system automatically generates a Tracking ID and routes to the correct authority (PWD/Municipal Corp) in real time. 🚧📱';
+  } else if (msgLower.includes('accident') || msgLower.includes('first aid') || msgLower.includes('cpr') || msgLower.includes('bleed')) {
+    fallbackText = 'Raasta AI Guardian: First Aid Guidelines: 1. BLEEDING: Apply direct firm pressure with clean cloth. 2. CPR: Push hard & fast in center of chest (100-120 bpm) to "Staying Alive" rhythm. 3. TRAUMA: Do not move neck/spine unless high fire risk. 4. Dial SOS immediately. 💖👼';
+  } else if (msgLower.includes('sign') || msgLower.includes('road sign')) {
+    fallbackText = 'Raasta AI Guardian: Traffic Signs are categorized into: 1. REGULATORY (Red circles - e.g. Stop, Speed Limit. Mandated by law); 2. WARNING (Yellow triangles - e.g. Speed Bump, Sharp Bend. Safety awareness); 3. INFORMATORY (Blue rectangles - e.g. Hospital, Parking). 🗺️🚦';
+  } else if (msgLower.includes('route') || msgLower.includes('navigation')) {
+    fallbackText = 'Raasta AI Guardian: Safest Corridor Route Alpha is currently recommended. It reduces overall accident probability by 63% and bypasses 2 waterlogged sections on Tech corridor. Brakes checked! 🚗🛡️';
+  } else if (msgLower.includes('document') || msgLower.includes('license') || msgLower.includes('insurance')) {
+    fallbackText = 'Raasta AI Guardian: Every motor vehicle operator on Indian roads must hold: 1. Valid Driving License (DL); 2. Vehicle Registration Certificate (RC); 3. Active third-party/comprehensive Insurance; 4. Pollution Under Control (PUC) certificate. Fines apply up to ₹5,000 for missing docs. 📄💳';
   } else {
-    characterAvatarState = 'neutral';
+    fallbackText = 'Raasta AI Guardian: Welcome to RaastaSense road safety cockpit! Ask me about state laws, fine calculations, first-aid tips, accident responses, road signs, or vehicle compliance checklists. Drive safe! 🛡️🚦';
   }
 
-  // 1) Use Google Gemini API if key is present
-  if (apiKey) {
+  // 2. Query Gemini AI if Online and API Key is available
+  if (!isOffline && apiKey) {
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-      // Create a contextual system instruction depending on the character
-      let systemPrompt = '';
-      if (recommendedCharacter === 'Traffic Sensei') {
-        systemPrompt = `You are "Traffic Sensei", a wise, discipline-focused, and friendly anime instructor for RaastaSense.
-You use traffic light themes, speak with teacher terms (like "class", "young driver", "learner"), and explain rules and fines strictly but with humor.
-Keep responses concise, fun, and highly formatted. Inject emoji: 🚦, 🚗, 🛑. Keep responses under 3-4 sentences.`;
-      } else if (recommendedCharacter === 'Road Guardian') {
-        systemPrompt = `You are "Road Guardian", a strong, protective, and brave anime knight that watches over city roads for RaastaSense.
-You speak like a valiant protector (e.g., "I will guard the streets!", "Safety is our shield!", "Report the danger!").
-Encourage users to report issues like potholes and broken signals.
-Keep responses concise, brave, and under 3-4 sentences. Inject emoji: 🛡️, 🚧, ⚔️.`;
-      } else {
-        systemPrompt = `You are "Rescue Spirit", a gentle, comforting, and helpful anime guardian angel for RaastaSense.
-Your duty is to keep people calm, instruct them in emergency protocols (first-aid, breathing, finding hospitals), and guide them through stress.
-Always sound warm, caring, reassuring, and highly helpful.
-Keep responses concise, extremely reassuring, and under 3-4 sentences. Inject emoji: 🚑, 💖, 👼.`;
-      }
+      const systemPrompt = `You are "Raasta AI Guardian", the centralized safety engine of RaastaSense road safety platform.
+Provide professional, legally accurate, and highly reassuring road safety answers. 
+Explain laws, speed limits, trauma routing, and accident response. 
+Format your responses with clean markdown and list layouts where appropriate. 
+If the user's question matches the current context, answer contextually. Limit response to 3-4 structured sentences. Always include relevant road safety emoji.`;
 
       const prompt = `System Instruction: ${systemPrompt}\n\nUser Question: ${message}`;
-      
       const result = await model.generateContent(prompt);
       const text = result.response.text();
 
       return res.json({
-        character: recommendedCharacter,
+        character: 'Raasta AI Guardian',
         text: text.trim(),
-        avatarState: characterAvatarState
+        avatarState: msgLower.includes('sos') || msgLower.includes('accident') ? 'alert' : 'neutral'
       });
     } catch (err) {
       console.error('Gemini API Error, falling back to local:', err);
-      // Fall through to local fallback
     }
   }
 
-  // 2) Deterministic Local Fallback (No AI required)
-  let fallbackText = '';
+  // Return fallback if offline or API key missing
+  res.json({
+    character: 'Raasta AI Guardian',
+    text: fallbackText,
+    avatarState: msgLower.includes('sos') || msgLower.includes('accident') ? 'alert' : 'neutral'
+  });
+});
+
+// NEW: ROADWATCH SCAN DIAGNOSTICS & AUTHORITY ROUTING
+app.post('/api/roadwatch/analyze', async (req: Request, res: Response) => {
+  const { type, description, location, latitude, longitude, image, isOffline } = req.body;
+
+  if (!type || !description) {
+    return res.status(400).json({ error: 'Missing type or description.' });
+  }
+
+  // Generate deterministic details
+  const trackingId = `RW-2026-${Math.floor(100000 + Math.random() * 900000)}`;
   
-  if (recommendedCharacter === 'Traffic Sensei') {
-    if (msgLower.includes('fine') || msgLower.includes('cost') || msgLower.includes('amount')) {
-      fallbackText = 'Traffic Sensei says: Ah, interested in penalties, are we? Drive carefully! Standard fines range from ₹1,000 for not wearing helmets or seatbelts, up to ₹10,000 for dangerous offences like Drunk Driving. Check our Rule Guide page to learn them all! 🚦';
-    } else if (msgLower.includes('speed')) {
-      fallbackText = 'Traffic Sensei says: Speed limits are calculations of safety, not high scores! Exceeding the speed limit results in a ₹2,000 fine and massive risk. Slow down! 🚗🛑';
-    } else if (msgLower.includes('helmet') || msgLower.includes('bike')) {
-      fallbackText = 'Traffic Sensei says: Young rider, your head is precious! Helmets reduce risk of severe injury by 300%. The law mandates it, and so do I! Protect your skull. 🛡️🏍️';
-    } else {
-      fallbackText = 'Traffic Sensei says: Hello! I am your DriveLegal instructor. Ask me about road fines, safety gear, or traffic laws, and I shall educate you! Remember, discipline is the key to safe streets. 🚦📚';
-    }
-  } else if (recommendedCharacter === 'Road Guardian') {
-    if (msgLower.includes('report') || msgLower.includes('how to')) {
-      fallbackText = 'Road Guardian says: Fear not, citizen! Reporting is simple. Go to the RoadWatch tab, choose the issue type (like a Pothole or Broken Signal), write the description, and hit report! I will immediately alert the authorities. 🚧🛡️';
-    } else if (msgLower.includes('pothole') || msgLower.includes('damage')) {
-      fallbackText = 'Road Guardian says: A pothole is a wound on our streets! Report it in our RoadWatch panel and I shall coordinate with the Municipal Works Dept to get it patched up! Safe travels! 🚧';
-    } else {
-      fallbackText = 'Road Guardian says: Stand tall! I am the Road Guardian, watching over these tarmac pathways. If you see cracks, craters, or broken signals, report them immediately. Safety is our shield! 🛡️⚔️';
-    }
-  } else {
-    // Rescue Spirit
-    if (msgLower.includes('hospital') || msgLower.includes('near')) {
-      fallbackText = 'Rescue Spirit says: Deep breath, friend! Near hospitals and emergency services are listed under the RoadSOS tab. City General is at Sector 4 and Metro Trauma is at Sector 9. Let me know if you need numbers! 🚑💖';
-    } else if (msgLower.includes('cpr') || msgLower.includes('first aid') || msgLower.includes('help')) {
-      fallbackText = 'Rescue Spirit says: Calm down, I am here. For CPR, push hard and fast in the center of the chest at 100-120 beats per minute. Call 102 immediately! I am sending positive healing light your way. 👼💖';
-    } else {
-      fallbackText = 'Rescue Spirit says: Gently now... I am the Rescue Spirit, here to soothe your stress. If there is a medical issue or collision, open the RoadSOS tab for direct dial buttons. You are not alone! 👼🚑';
+  let authority = 'Municipal Corporation';
+  let priority: 'Immediate' | 'High' | 'Medium' | 'Low' = 'Medium';
+  let expectedResolution = '3 Days';
+
+  const typeLower = type.toLowerCase();
+  if (typeLower.includes('accident') || typeLower.includes('collision')) {
+    authority = 'Emergency Services & Traffic Police';
+    priority = 'Immediate';
+    expectedResolution = '4 Hours';
+  } else if (typeLower.includes('signal') || typeLower.includes('light')) {
+    authority = 'Traffic Control Department';
+    priority = 'High';
+    expectedResolution = '24 Hours';
+  } else if (typeLower.includes('waterlogging') || typeLower.includes('flooding')) {
+    authority = 'Municipal Corporation (Drainage Division)';
+    priority = 'High';
+    expectedResolution = '12 Hours';
+  } else if (typeLower.includes('pothole') || typeLower.includes('broken')) {
+    authority = 'Public Works Department (PWD)';
+    priority = 'Medium';
+    expectedResolution = '2 Days';
+  } else if (typeLower.includes('highway') || typeLower.includes('expressway')) {
+    authority = 'National Highway Authority (NHAI)';
+    priority = 'Medium';
+    expectedResolution = '3 Days';
+  }
+
+  let summary = `Local safety sensor flagged a ${type} at ${location || 'unspecified location'}.`;
+  let actionAdvice = 'Exercise extreme caution when approaching this zone. Reduce speed by 30%.';
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!isOffline && apiKey) {
+    try {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+      const prompt = `You are a municipal road safety AI router. Analyze this reported road hazard:
+Type: ${type}
+Description: ${description}
+Location: ${location || 'Unknown'}
+
+Provide a structured response in JSON format. Do not write markdown wrapping. Return strictly JSON:
+{
+  "summary": "1-sentence professional summary describing the hazard's impact",
+  "actionAdvice": "1-sentence warning guidelines for driving safety"
+}`;
+      
+      const result = await model.generateContent(prompt);
+      const text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(text);
+      if (parsed.summary) summary = parsed.summary;
+      if (parsed.actionAdvice) actionAdvice = parsed.actionAdvice;
+    } catch (e) {
+      console.error('Gemini RoadWatch classification error, using local fallback:', e);
     }
   }
 
   res.json({
-    character: recommendedCharacter,
-    text: fallbackText,
-    avatarState: characterAvatarState
+    trackingId,
+    authority,
+    priority,
+    expectedResolution,
+    summary,
+    actionAdvice,
+    status: 'Reported',
+    createdAt: new Date().toISOString()
+  });
+});
+
+// NEW: DETERMINISTIC ROAD RISK CALCULATOR WITH GEMINI EXPLANATION
+app.post('/api/predict-risk', async (req: Request, res: Response) => {
+  const { 
+    speed, weather, roadCondition, timeOfDay, visibility, 
+    laneDiscipline, seatbeltStatus, phoneUsage, fatigue, isOffline 
+  } = req.body;
+
+  let baseRisk = 10;
+  
+  // Telemetry weights
+  if (speed > 100) baseRisk += 35;
+  else if (speed > 75) baseRisk += 20;
+  else if (speed > 50) baseRisk += 8;
+
+  if (weather === 'Rainy') baseRisk += 15;
+  else if (weather === 'Foggy') baseRisk += 22;
+
+  if (roadCondition === 'Severe Potholes') baseRisk += 18;
+  else if (roadCondition === 'Wet Surface') baseRisk += 8;
+
+  if (timeOfDay === 'Night') baseRisk += 10;
+  if (visibility === 'Low') baseRisk += 15;
+  else if (visibility === 'Medium') baseRisk += 5;
+
+  if (phoneUsage) baseRisk += 25;
+  if (fatigue) baseRisk += 22;
+  if (seatbeltStatus === 'Unbuckled') baseRisk += 15;
+  if (laneDiscipline === 'Erratic') baseRisk += 20;
+  else if (laneDiscipline === 'Drifting') baseRisk += 8;
+
+  const score = Math.min(100, Math.max(0, baseRisk));
+  
+  let category: 'Safe' | 'Warning' | 'High Risk' | 'Critical' = 'Safe';
+  if (score > 85) category = 'Critical';
+  else if (score > 67) category = 'High Risk';
+  else if (score > 33) category = 'Warning';
+
+  let explanation = `Parameters are within stable baseline conditions. Drive responsibly.`;
+  if (category === 'Critical' || category === 'High Risk') {
+    explanation = `High risk detected. Overspeeding or distraction flags combined with adverse environmental factors reduce driver feedback loops. Wear helmet/seatbelt, reduce speed immediately, and eliminate phone use.`;
+  } else if (category === 'Warning') {
+    explanation = `Caution advised. Minor visibility degradation or road roughness detected. Maintain safe distance rules.`;
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!isOffline && apiKey) {
+    try {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+      const prompt = `Analyze these simulator metrics and write a professional 2-sentence road risk explanation:
+- Risk Score: ${score}/100
+- Risk Category: ${category}
+- Current Speed: ${speed} km/h
+- Environment: Weather=${weather}, Time=${timeOfDay}, RoadCondition=${roadCondition}, Visibility=${visibility}
+- Driver State: Phone=${phoneUsage}, Fatigue=${fatigue}, Seatbelt=${seatbeltStatus}, LaneDiscipline=${laneDiscipline}
+
+Keep explanation highly realistic, objective, and command-center professional.`;
+
+      const result = await model.generateContent(prompt);
+      explanation = result.response.text().trim();
+    } catch (e) {
+      console.error('Gemini Risk Prediction error, fallback used:', e);
+    }
+  }
+
+  res.json({
+    riskScore: score,
+    riskCategory: category,
+    explanation
+  });
+});
+
+// NEW: ROAD SAFETY INDEX DYNAMIC CITY METRICS
+app.post('/api/road-safety-index', async (req: Request, res: Response) => {
+  const { city, isOffline } = req.body;
+
+  if (!city) {
+    return res.status(400).json({ error: 'Missing city name.' });
+  }
+
+  // Predefined deterministic indices for major Indian cities
+  const cityDataMap: Record<string, { score: number, traffic: string, weather: string, roads: string, readiness: string, advice: string }> = {
+    'nagpur': {
+      score: 82,
+      traffic: 'Moderate',
+      weather: 'Optimal (Clear)',
+      roads: 'Good (Asphalt)',
+      readiness: 'High (3 Trauma hubs, 12 Ambulances active)',
+      advice: 'Traffic flow is steady. Safe transit corridors active on Wardha Road.'
+    },
+    'mumbai': {
+      score: 64,
+      traffic: 'Heavy Congestion',
+      weather: 'Precipitation Warning',
+      roads: 'Pothole hazards on Eastern Express Highway',
+      readiness: 'Excellent (18 Hospitals active)',
+      advice: 'Moderate waterlogging near Sion circle. Alternative routes mapped.'
+    },
+    'delhi': {
+      score: 59,
+      traffic: 'Heavy Flow',
+      weather: 'Low Haze/Smog',
+      roads: 'Good',
+      readiness: 'High (National emergency routing active)',
+      advice: 'Air/Visibility values degraded. Use fog lamps on Ring Road Bypass.'
+    },
+    'chennai': {
+      score: 75,
+      traffic: 'Moderate',
+      weather: 'Clear Skies',
+      roads: 'Fair',
+      readiness: 'Good (IIT Madras zone priority SOS dispatch active)',
+      advice: 'Safe transit verified. Speeds stable at 50 km/h average.'
+    },
+    'bangalore': {
+      score: 68,
+      traffic: 'Severe congestion (Outer Ring Road)',
+      weather: 'Slight drizzle',
+      roads: 'Severe pothole clusters in local lanes',
+      readiness: 'Moderate (Hospital networks saturated)',
+      advice: 'Avoid Outer Ring Road near Silk Board. Route C offers 22 mins bypass advantage.'
+    }
+  };
+
+  const key = city.toLowerCase();
+  const data = cityDataMap[key] || {
+    score: 72,
+    traffic: 'Moderate',
+    weather: 'Clear',
+    roads: 'Fair',
+    readiness: 'Standard emergency coverage',
+    advice: 'Follow basic compliance regulations. Fasten safety belts.'
+  };
+
+  let geminiAdvice = data.advice;
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!isOffline && apiKey) {
+    try {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+      const prompt = `Provide a concise, professional 1-sentence traffic safety advice for the city of ${city} with these current parameters:
+- Traffic Risk: ${data.traffic}
+- Weather: ${data.weather}
+- Road Condition: ${data.roads}
+- Emergency Readiness: ${data.readiness}
+
+Explain briefly which route is recommended.`;
+
+      const result = await model.generateContent(prompt);
+      geminiAdvice = result.response.text().trim();
+    } catch (e) {
+      console.error('Gemini City Index error, fallback used:', e);
+    }
+  }
+
+  res.json({
+    city,
+    safetyScore: data.score,
+    trafficRisk: data.traffic,
+    weatherRisk: data.weather,
+    roadCondition: data.roads,
+    emergencyReadiness: data.readiness,
+    recommendation: geminiAdvice
   });
 });
 

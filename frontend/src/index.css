@@ -105,3 +105,38 @@
 .shadow-glow-blue {
   box-shadow: 0 0 15px rgba(14, 165, 233, 0.35);
 }
+
+/* Route dash animation */
+@keyframes dash {
+  to {
+    stroke-dashoffset: -40;
+  }
+}
+.animated-route-line {
+  stroke-dasharray: 10, 15;
+  animation: dash 8s linear infinite;
+}
+
+/* Custom background animations */
+@keyframes pulse-satellite {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(1.05);
+  }
+}
+.animate-satellite-glow {
+  animation: pulse-satellite 4s ease-in-out infinite;
+}
+
+/* Background road grid styling */
+.bg-road-grid {
+  background-image: 
+    radial-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 0),
+    radial-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 0);
+  background-size: 40px 40px;
+  background-position: 0 0, 20px 20px;
+}
