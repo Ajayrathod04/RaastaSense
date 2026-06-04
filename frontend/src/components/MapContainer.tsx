@@ -64,6 +64,7 @@ export default function MapContainer({
   const mapRef = useRef<L.Map | null>(null);
   const layersGroupRef = useRef<L.LayerGroup | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
+  const lastCenteredCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
 
   // Digital Twin Command Center Layer Visibility States
   const [layers, setLayers] = useState({
@@ -71,7 +72,8 @@ export default function MapContainer({
     hotspots: true,
     reports: true,
     roadQuality: true,
-    emergency: true,
+    hospital: true,
+    police: true,
     safeRoute: true,
     riskPrediction: true
   });
@@ -82,7 +84,7 @@ export default function MapContainer({
 
     const initialCenter = userCoords
       ? [userCoords.lat, userCoords.lng]
-      : [12.9915, 80.2336];
+      : [21.1458, 79.0882];
 
     // Create map instance
     const map = L.map(mapContainerRef.current, {
@@ -123,11 +125,18 @@ export default function MapContainer({
   useEffect(() => {
     if (!mapRef.current || !userCoords) return;
 
-    // Pan to user coords
-    mapRef.current.setView(
-      [userCoords.lat, userCoords.lng] as L.LatLngExpression,
-      mapRef.current.getZoom(),
-    );
+    const hasChanged = !lastCenteredCoordsRef.current ||
+      lastCenteredCoordsRef.current.lat !== userCoords.lat ||
+      lastCenteredCoordsRef.current.lng !== userCoords.lng;
+
+    if (hasChanged) {
+      // Pan to user coords
+      mapRef.current.setView(
+        [userCoords.lat, userCoords.lng] as L.LatLngExpression,
+        mapRef.current.getZoom(),
+      );
+      lastCenteredCoordsRef.current = { lat: userCoords.lat, lng: userCoords.lng };
+    }
 
     // Update or create User Pulse Marker
     if (userMarkerRef.current) {
@@ -293,8 +302,12 @@ export default function MapContainer({
     }
 
     // 4. Draw Emergency Networks
-    if (layers.emergency) {
+    if (layers.hospital || layers.police) {
       MOCK_EMERGENCY_NODES.forEach((node, idx) => {
+        if (node.type === "hospital" && !layers.hospital) return;
+        if (node.type === "police" && !layers.police) return;
+        if (node.type === "ambulance" && !layers.hospital && !layers.police) return;
+
         let iconHtml = "🏥";
         let colorClass = "bg-rose-500 border-rose-350 shadow-[0_0_10px_#f43f5e]";
         if (node.type === "police") {
@@ -430,6 +443,7 @@ export default function MapContainer({
         [userCoords.lat, userCoords.lng] as L.LatLngExpression,
         15,
       );
+      lastCenteredCoordsRef.current = { lat: userCoords.lat, lng: userCoords.lng };
     }
   };
 
@@ -523,17 +537,37 @@ export default function MapContainer({
             <span>Road Quality</span>
           </label>
 
-          <label className="flex items-center space-x-1 text-[10px] font-bold text-slate-405 cursor-pointer hover:text-white transition">
+          <label className="flex items-center space-x-1 text-[10px] font-bold text-slate-400 cursor-pointer hover:text-white transition">
             <input 
               type="checkbox" 
-              checked={layers.emergency}
-              onChange={() => setLayers(prev => ({ ...prev, emergency: !prev.emergency }))}
+              checked={layers.hospital}
+              onChange={() => setLayers(prev => ({ ...prev, hospital: !prev.hospital }))}
               className="rounded accent-sky-500 bg-slate-900 border-slate-800 focus:ring-0 cursor-pointer"
             />
-            <span>Emergency Net</span>
+            <span>Hospital</span>
           </label>
 
-          <label className="flex items-center space-x-1 text-[10px] font-bold text-slate-405 cursor-pointer hover:text-white transition">
+          <label className="flex items-center space-x-1 text-[10px] font-bold text-slate-400 cursor-pointer hover:text-white transition">
+            <input 
+              type="checkbox" 
+              checked={layers.police}
+              onChange={() => setLayers(prev => ({ ...prev, police: !prev.police }))}
+              className="rounded accent-sky-500 bg-slate-900 border-slate-800 focus:ring-0 cursor-pointer"
+            />
+            <span>Police</span>
+          </label>
+
+          <label className="flex items-center space-x-1 text-[10px] font-bold text-slate-400 cursor-pointer hover:text-white transition">
+            <input 
+              type="checkbox" 
+              checked={layers.safeRoute}
+              onChange={() => setLayers(prev => ({ ...prev, safeRoute: !prev.safeRoute }))}
+              className="rounded accent-sky-500 bg-slate-900 border-slate-800 focus:ring-0 cursor-pointer"
+            />
+            <span>Safe Corridor</span>
+          </label>
+
+          <label className="flex items-center space-x-1 text-[10px] font-bold text-slate-400 cursor-pointer hover:text-white transition">
             <input 
               type="checkbox" 
               checked={layers.riskPrediction}
